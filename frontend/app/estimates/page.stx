@@ -1,0 +1,89 @@
+"use client";
+import { useEffect, useState } from "react";
+import { apiGet, apiPost } from "../api";
+
+export default function EstimatesPage() {
+  const [leads, setLeads] = useState<any[]>([]);
+  const [estimates, setEstimates] = useState<any[]>([]);
+  const [leadId, setLeadId] = useState<number | null>(null);
+
+  const [rawNotes, setRawNotes] = useState("");
+  const [jobDesc, setJobDesc] = useState("");
+  const [aiOut, setAiOut] = useState<any>(null);
+
+  const [finalPrice, setFinalPrice] = useState(0);
+
+  async function refresh() {
+    const ls = await apiGet("/leads");
+    setLeads(ls);
+    if (ls.length && leadId === null) setLeadId(ls[0].id);
+    setEstimates(await apiGet("/estimates"));
+  }
+  useEffect(() => { refresh(); }, []);
+
+  async function runNotes() {
+    setAiOut(await apiPost("/ai/notes", { raw_notes: rawNotes }));
+  }
+  async function runEstimate() {
+    if (!leadId) return;
+    setAiOut(await apiPost("/ai/estimate", { lead_id: leadId, job_description: jobDesc }));
+  }
+  async function saveEstimate() {
+    if (!leadId) return;
+    await apiPost("/estimates", {
+      lead_id: leadId,
+      scope: aiOut?.scope || "",
+      hazards: aiOut?.hazards || "",
+      equipment: aiOut?.equipment || "",
+      final_price: finalPrice,
+    });
+    setAiOut(null);
+    setRawNotes("");
+    setJobDesc("");
+    setFinalPrice(0);
+    await refresh();
+  }
+
+  return (
+    <main>
+      <h2>Estimates</h2>
+
+      <div style={{ display: "grid", gap: 10, maxWidth: 720 }}>
+        <label>
+          Lead:
+          <select value={leadId ?? ""} onChange={e=>setLeadId(Number(e.target.value))}>
+            {leads.map(l => <option key={l.id} value={l.id}>{l.name} (#{l.id})</option>)}
+          </select>
+        </label>
+
+        <h3>AI: Structure Notes</h3>
+        <textarea rows={4} placeholder="Paste field notes..." value={rawNotes} onChange={e=>setRawNotes(e.target.value)} />
+        <button onClick={runNotes}>Structure Notes</button>
+
+        <h3>AI: Suggest Estimate</h3>
+        <textarea rows={3} placeholder="Job description..." value={jobDesc} onChange={e=>setJobDesc(e.target.value)} />
+        <button onClick={runEstimate}>Suggest Scope + Price</button>
+
+        {aiOut && (
+          <div style={{ border: "1px solid #eee", padding: 12, borderRadius: 8 }}>
+            <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(aiOut, null, 2)}</pre>
+            <label>
+              Final Price:
+              <input type="number" value={finalPrice} onChange={e=>setFinalPrice(Number(e.target.value))} />
+            </label>
+            <button onClick={saveEstimate}>Save Estimate</button>
+          </div>
+        )}
+      </div>
+
+      <h3 style={{ marginTop: 24 }}>Recent</h3>
+      <ul>
+        {estimates.map(e => (
+          <li key={e.id}>
+            Estimate #{e.id} (Lead #{e.lead_id}) — final: ${e.final_price} — status: {e.status}
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
