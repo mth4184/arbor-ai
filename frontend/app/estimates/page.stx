@@ -45,45 +45,155 @@ export default function EstimatesPage() {
   }
 
   return (
-    <main>
-      <h2>Estimates</h2>
+    <main className="page">
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">Estimating</p>
+          <h2 className="page-title">Estimates</h2>
+          <p className="page-subtitle">
+            Convert lead details into polished scope, hazards, and pricing
+            recommendations.
+          </p>
+        </div>
+        <span className="badge">AI assisted</span>
+      </header>
 
-      <div style={{ display: "grid", gap: 10, maxWidth: 720 }}>
-        <label>
-          Lead:
-          <select value={leadId ?? ""} onChange={e=>setLeadId(Number(e.target.value))}>
-            {leads.map(l => <option key={l.id} value={l.id}>{l.name} (#{l.id})</option>)}
-          </select>
-        </label>
-
-        <h3>AI: Structure Notes</h3>
-        <textarea rows={4} placeholder="Paste field notes..." value={rawNotes} onChange={e=>setRawNotes(e.target.value)} />
-        <button onClick={runNotes}>Structure Notes</button>
-
-        <h3>AI: Suggest Estimate</h3>
-        <textarea rows={3} placeholder="Job description..." value={jobDesc} onChange={e=>setJobDesc(e.target.value)} />
-        <button onClick={runEstimate}>Suggest Scope + Price</button>
-
-        {aiOut && (
-          <div style={{ border: "1px solid #eee", padding: 12, borderRadius: 8 }}>
-            <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(aiOut, null, 2)}</pre>
-            <label>
-              Final Price:
-              <input type="number" value={finalPrice} onChange={e=>setFinalPrice(Number(e.target.value))} />
-            </label>
-            <button onClick={saveEstimate}>Save Estimate</button>
+      <section className="card">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Estimate workspace</div>
+            <p className="card-subtitle">
+              Choose a lead and enrich the scope with AI summaries.
+            </p>
           </div>
-        )}
-      </div>
+          <span className="badge">Scope builder</span>
+        </div>
+        <div className="form-grid">
+          <div className="field field-full">
+            <label className="label" htmlFor="estimate-lead">Lead</label>
+            <select
+              id="estimate-lead"
+              className="select"
+              value={leadId ?? ""}
+              onChange={e=>setLeadId(Number(e.target.value))}
+            >
+              {leads.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.name} (#{l.id})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      <h3 style={{ marginTop: 24 }}>Recent</h3>
-      <ul>
-        {estimates.map(e => (
-          <li key={e.id}>
-            Estimate #{e.id} (Lead #{e.lead_id}) — final: ${e.final_price} — status: {e.status}
-          </li>
-        ))}
-      </ul>
+        <div className="panel-grid section">
+          <div className="panel">
+            <div className="card-title">Structure field notes</div>
+            <p className="card-subtitle">
+              Turn inspection notes into organized scope and hazards.
+            </p>
+            <div className="field section">
+              <label className="label" htmlFor="estimate-notes">Raw notes</label>
+              <textarea
+                id="estimate-notes"
+                className="textarea"
+                rows={4}
+                placeholder="Paste field notes..."
+                value={rawNotes}
+                onChange={e=>setRawNotes(e.target.value)}
+              />
+            </div>
+            <div className="form-actions">
+              <button className="btn btn-secondary" onClick={runNotes}>
+                Structure Notes
+              </button>
+            </div>
+          </div>
+          <div className="panel">
+            <div className="card-title">Suggest scope and price</div>
+            <p className="card-subtitle">
+              Provide a summary of the job to generate scope and pricing.
+            </p>
+            <div className="field section">
+              <label className="label" htmlFor="estimate-job">Job description</label>
+              <textarea
+                id="estimate-job"
+                className="textarea"
+                rows={3}
+                placeholder="Job description..."
+                value={jobDesc}
+                onChange={e=>setJobDesc(e.target.value)}
+              />
+            </div>
+            <div className="form-actions">
+              <button className="btn btn-secondary" onClick={runEstimate}>
+                Suggest Scope + Price
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {aiOut && (
+        <section className="card section">
+          <div className="card-header">
+            <div>
+              <div className="card-title">AI summary</div>
+              <p className="card-subtitle">
+                Review the structured output before saving the estimate.
+              </p>
+            </div>
+            <span className="badge">Ready to save</span>
+          </div>
+          <pre className="code-block">{JSON.stringify(aiOut, null, 2)}</pre>
+          <div className="form-grid section">
+            <div className="field">
+              <label className="label" htmlFor="final-price">Final price</label>
+              <input
+                id="final-price"
+                className="input"
+                type="number"
+                value={finalPrice}
+                onChange={e=>setFinalPrice(Number(e.target.value))}
+              />
+            </div>
+            <div className="form-actions">
+              <button className="btn btn-primary" onClick={saveEstimate}>
+                Save Estimate
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="card section">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Recent estimates</div>
+            <p className="card-subtitle">
+              Track the latest proposals awaiting scheduling.
+            </p>
+          </div>
+          <span className="badge">{estimates.length} total</span>
+        </div>
+        {estimates.length === 0 ? (
+          <p className="card-subtitle">No estimates yet. Run AI to create one.</p>
+        ) : (
+          <ul className="list">
+            {estimates.map(e => (
+              <li key={e.id} className="list-item">
+                <div>
+                  <div className="list-title">Estimate #{e.id}</div>
+                  <div className="list-meta">
+                    Lead #{e.lead_id} · Final ${e.final_price}
+                  </div>
+                </div>
+                <span className="list-status">{e.status}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }
