@@ -42,31 +42,110 @@ export default function SchedulePage() {
   }
 
   return (
-    <main>
-      <h2>Schedule</h2>
+    <main className="page">
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">Scheduling</p>
+          <h2 className="page-title">Schedule</h2>
+          <p className="page-subtitle">
+            Balance crews with the latest estimate approvals and property needs.
+          </p>
+        </div>
+        <span className="badge">Crew planner</span>
+      </header>
 
-      <label>
-        Estimate:
-        <select value={estimateId ?? ""} onChange={e=>setEstimateId(Number(e.target.value))}>
-          {estimates.map(e => <option key={e.id} value={e.id}>Estimate #{e.id}</option>)}
-        </select>
-      </label>
+      <section className="card">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Plan the job</div>
+            <p className="card-subtitle">
+              Pick an estimate and assign a date and crew for the work order.
+            </p>
+          </div>
+          <span className="badge">AI available</span>
+        </div>
+        <div className="form-grid">
+          <div className="field">
+            <label className="label" htmlFor="schedule-estimate">Estimate</label>
+            <select
+              id="schedule-estimate"
+              className="select"
+              value={estimateId ?? ""}
+              onChange={e=>setEstimateId(Number(e.target.value))}
+            >
+              {estimates.map(e => (
+                <option key={e.id} value={e.id}>Estimate #{e.id}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="schedule-date">Scheduled date</label>
+            <input
+              id="schedule-date"
+              className="input"
+              placeholder="YYYY-MM-DD"
+              value={date}
+              onChange={e=>setDate(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="schedule-crew">Crew</label>
+            <input
+              id="schedule-crew"
+              className="input"
+              placeholder="Crew"
+              value={crew}
+              onChange={e=>setCrew(e.target.value)}
+            />
+          </div>
+          <div className="form-actions">
+            <button className="btn btn-secondary" onClick={suggest}>
+              AI Suggest Schedule
+            </button>
+            <button className="btn btn-primary" onClick={createJob}>
+              Create Job
+            </button>
+          </div>
+        </div>
+        {ai && (
+          <div className="panel section">
+            <div className="card-title">AI recommendation</div>
+            <p className="card-subtitle">
+              Suggested crew and timing based on current workload.
+            </p>
+            <pre className="code-block section">{JSON.stringify(ai, null, 2)}</pre>
+          </div>
+        )}
+      </section>
 
-      <div style={{ marginTop: 12, display: "grid", gap: 8, maxWidth: 520 }}>
-        <button onClick={suggest}>AI Suggest Schedule</button>
-        {ai && <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(ai, null, 2)}</pre>}
-
-        <input placeholder="YYYY-MM-DD" value={date} onChange={e=>setDate(e.target.value)} />
-        <input placeholder="Crew" value={crew} onChange={e=>setCrew(e.target.value)} />
-        <button onClick={createJob}>Create Job</button>
-      </div>
-
-      <h3 style={{ marginTop: 24 }}>Jobs</h3>
-      <ul>
-        {jobs.map(j => (
-          <li key={j.id}>Job #{j.id} — {j.scheduled_for} — {j.crew} — {j.status}</li>
-        ))}
-      </ul>
+      <section className="card section">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Upcoming jobs</div>
+            <p className="card-subtitle">
+              Confirm crew assignments and job status for the week.
+            </p>
+          </div>
+          <span className="badge">{jobs.length} scheduled</span>
+        </div>
+        {jobs.length === 0 ? (
+          <p className="card-subtitle">No jobs yet. Schedule the first one above.</p>
+        ) : (
+          <ul className="list">
+            {jobs.map(j => (
+              <li key={j.id} className="list-item">
+                <div>
+                  <div className="list-title">Job #{j.id}</div>
+                  <div className="list-meta">
+                    {j.scheduled_for} · {j.crew}
+                  </div>
+                </div>
+                <span className="list-status">{j.status}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }

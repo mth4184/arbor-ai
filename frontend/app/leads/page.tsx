@@ -18,24 +18,102 @@ export default function LeadsPage() {
   }
 
   return (
-    <main>
-      <h2>Leads</h2>
-      <div style={{ display: "grid", gap: 8, maxWidth: 600 }}>
-        <input placeholder="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})}/>
-        <input placeholder="Phone" value={form.phone} onChange={e=>setForm({...form, phone:e.target.value})}/>
-        <input placeholder="Address" value={form.address} onChange={e=>setForm({...form, address:e.target.value})}/>
-        <textarea placeholder="Notes" value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})}/>
-        <button onClick={submit}>Create Lead</button>
-      </div>
+    <main className="page">
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">Pipeline</p>
+          <h2 className="page-title">Leads</h2>
+          <p className="page-subtitle">
+            Capture new inquiries and set up each property visit with complete
+            contact details.
+          </p>
+        </div>
+        <span className="badge">Intake</span>
+      </header>
 
-      <h3 style={{ marginTop: 24 }}>Recent</h3>
-      <ul>
-        {leads.map(l => (
-          <li key={l.id}>
-            <b>{l.name}</b> — {l.phone} — {l.address}
-          </li>
-        ))}
-      </ul>
+      <section className="card">
+        <div className="card-header">
+          <div>
+            <div className="card-title">New lead</div>
+            <p className="card-subtitle">
+              Log the request and attach any site notes from the caller.
+            </p>
+          </div>
+          <span className="badge">Priority routing</span>
+        </div>
+        <div className="form-grid">
+          <div className="field">
+            <label className="label" htmlFor="lead-name">Full name</label>
+            <input
+              id="lead-name"
+              className="input"
+              placeholder="Name"
+              value={form.name}
+              onChange={e=>setForm({ ...form, name: e.target.value })}
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="lead-phone">Phone</label>
+            <input
+              id="lead-phone"
+              className="input"
+              placeholder="Phone"
+              value={form.phone}
+              onChange={e=>setForm({ ...form, phone: e.target.value })}
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="lead-address">Address</label>
+            <input
+              id="lead-address"
+              className="input"
+              placeholder="Address"
+              value={form.address}
+              onChange={e=>setForm({ ...form, address: e.target.value })}
+            />
+          </div>
+          <div className="field field-full">
+            <label className="label" htmlFor="lead-notes">Notes</label>
+            <textarea
+              id="lead-notes"
+              className="textarea"
+              placeholder="Notes"
+              value={form.notes}
+              onChange={e=>setForm({ ...form, notes: e.target.value })}
+            />
+          </div>
+          <div className="form-actions">
+            <button className="btn btn-primary" onClick={submit}>Create Lead</button>
+          </div>
+        </div>
+      </section>
+
+      <section className="card section">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Recent leads</div>
+            <p className="card-subtitle">
+              The latest customer inquiries ready for estimate work.
+            </p>
+          </div>
+          <span className="badge">{leads.length} active</span>
+        </div>
+        {leads.length === 0 ? (
+          <p className="card-subtitle">No leads yet. Add one above to get started.</p>
+        ) : (
+          <ul className="list">
+            {leads.map(l => (
+              <li className="list-item" key={l.id}>
+                <div>
+                  <div className="list-title">{l.name}</div>
+                  <div className="list-meta">{l.phone} · {l.address}</div>
+                </div>
+                <span className="list-status">New</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }
