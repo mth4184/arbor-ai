@@ -15,6 +15,7 @@ export default function JobDetailPage() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
+  const [salesReps, setSalesReps] = useState<any[]>([]);
   const [newTask, setNewTask] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [attachmentCaption, setAttachmentCaption] = useState("");
@@ -23,17 +24,19 @@ export default function JobDetailPage() {
   const [invoiceResult, setInvoiceResult] = useState<any | null>(null);
 
   async function load() {
-    const [jobItem, files, equipmentItems, crewItems] = await Promise.all([
+    const [jobItem, files, equipmentItems, crewItems, salesRepItems] = await Promise.all([
       apiGet(`/jobs/${id}`),
       apiGet("/attachments", { entity_type: "job", entity_id: id }),
       apiGet("/equipment"),
       apiGet("/crews"),
+      apiGet("/sales-reps"),
     ]);
     setJob(jobItem);
     setTasks(jobItem.tasks || []);
     setAttachments(files || []);
     setEquipment(equipmentItems || []);
     setCrews(crewItems || []);
+    setSalesReps(salesRepItems || []);
   }
 
   useEffect(() => {
@@ -150,6 +153,23 @@ export default function JobDetailPage() {
               </select>
             </div>
             <div className="field">
+              <label className="label">Sales rep</label>
+              <select
+                className="select"
+                value={job.sales_rep_id ?? ""}
+                onChange={(e) =>
+                  setJob({ ...job, sales_rep_id: e.target.value ? Number(e.target.value) : null })
+                }
+              >
+                <option value="">Unassigned</option>
+                {salesReps.map((rep) => (
+                  <option key={rep.id} value={rep.id}>
+                    {rep.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <label className="label">Status</label>
               <select
                 className="select"
@@ -166,16 +186,22 @@ export default function JobDetailPage() {
               <label className="label">Scheduled start</label>
               <input
                 className="input"
-                value={job.scheduled_start ?? ""}
-                onChange={(e) => setJob({ ...job, scheduled_start: e.target.value })}
+                type="date"
+                value={job.scheduled_start ? String(job.scheduled_start).slice(0, 10) : ""}
+                onChange={(e) =>
+                  setJob({ ...job, scheduled_start: e.target.value ? `${e.target.value}T00:00:00` : null })
+                }
               />
             </div>
             <div className="field">
               <label className="label">Scheduled end</label>
               <input
                 className="input"
-                value={job.scheduled_end ?? ""}
-                onChange={(e) => setJob({ ...job, scheduled_end: e.target.value })}
+                type="date"
+                value={job.scheduled_end ? String(job.scheduled_end).slice(0, 10) : ""}
+                onChange={(e) =>
+                  setJob({ ...job, scheduled_end: e.target.value ? `${e.target.value}T00:00:00` : null })
+                }
               />
             </div>
             <div className="field">

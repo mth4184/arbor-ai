@@ -185,6 +185,7 @@ def create_job(db: Session, payload, tasks, equipment_ids):
         scheduled_start=payload.scheduled_start,
         scheduled_end=payload.scheduled_end,
         crew_id=payload.crew_id,
+        sales_rep_id=payload.sales_rep_id,
         total=payload.total,
         notes=payload.notes,
     )
@@ -221,6 +222,7 @@ def list_jobs(
     status: str | None = None,
     crew_id: int | None = None,
     customer_id: int | None = None,
+    sales_rep_id: int | None = None,
     start: datetime | None = None,
     end: datetime | None = None,
 ):
@@ -231,6 +233,8 @@ def list_jobs(
         query = query.filter(models.Job.crew_id == crew_id)
     if customer_id:
         query = query.filter(models.Job.customer_id == customer_id)
+    if sales_rep_id:
+        query = query.filter(models.Job.sales_rep_id == sales_rep_id)
     if start:
         query = query.filter(models.Job.scheduled_start >= start)
     if end:
@@ -414,3 +418,30 @@ def ensure_settings(db: Session):
         db.commit()
         db.refresh(settings)
     return settings
+
+
+def create_sales_rep(db: Session, payload):
+    sales_rep = models.SalesRep(
+        name=payload.name,
+        email=payload.email,
+        phone=payload.phone,
+        notes=payload.notes,
+    )
+    db.add(sales_rep)
+    db.commit()
+    db.refresh(sales_rep)
+    return sales_rep
+
+
+def update_sales_rep(db: Session, sales_rep: models.SalesRep, payload):
+    for key in ["name", "email", "phone", "notes"]:
+        value = getattr(payload, key, None)
+        if value is not None:
+            setattr(sales_rep, key, value)
+    db.commit()
+    db.refresh(sales_rep)
+    return sales_rep
+
+
+def list_sales_reps(db: Session):
+    return db.query(models.SalesRep).order_by(models.SalesRep.id.desc()).all()

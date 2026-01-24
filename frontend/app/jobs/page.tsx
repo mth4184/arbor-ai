@@ -11,9 +11,11 @@ export default function JobsPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [estimates, setEstimates] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
+  const [salesReps, setSalesReps] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
   const [estimateId, setEstimateId] = useState<string>("");
   const [crewId, setCrewId] = useState<string>("");
+  const [salesRepId, setSalesRepId] = useState<string>("");
   const [status, setStatus] = useState("scheduled");
   const [scheduledStart, setScheduledStart] = useState("");
   const [scheduledEnd, setScheduledEnd] = useState("");
@@ -23,16 +25,18 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState("");
 
   async function refresh() {
-    const [jobItems, customerItems, estimateItems, crewItems] = await Promise.all([
+    const [jobItems, customerItems, estimateItems, crewItems, salesRepItems] = await Promise.all([
       apiGet("/jobs", { q: search, status: statusFilter || undefined }),
       apiGet("/customers"),
       apiGet("/estimates"),
       apiGet("/crews"),
+      apiGet("/sales-reps"),
     ]);
     setJobs(jobItems);
     setCustomers(customerItems);
     setEstimates(estimateItems);
     setCrews(crewItems);
+    setSalesReps(salesRepItems);
     if (!customerId && customerItems.length) setCustomerId(String(customerItems[0].id));
   }
 
@@ -46,9 +50,10 @@ export default function JobsPage() {
       customer_id: Number(customerId),
       estimate_id: estimateId ? Number(estimateId) : null,
       status,
-      scheduled_start: scheduledStart || null,
-      scheduled_end: scheduledEnd || null,
+      scheduled_start: scheduledStart ? `${scheduledStart}T00:00:00` : null,
+      scheduled_end: scheduledEnd ? `${scheduledEnd}T00:00:00` : null,
       crew_id: crewId ? Number(crewId) : null,
+      sales_rep_id: salesRepId ? Number(salesRepId) : null,
       total,
       notes,
       tasks: [],
@@ -56,6 +61,7 @@ export default function JobsPage() {
     });
     setEstimateId("");
     setCrewId("");
+    setSalesRepId("");
     setScheduledStart("");
     setScheduledEnd("");
     setTotal(0);
@@ -120,6 +126,17 @@ export default function JobsPage() {
             </select>
           </div>
           <div className="field">
+            <label className="label">Sales rep</label>
+            <select className="select" value={salesRepId} onChange={(e) => setSalesRepId(e.target.value)}>
+              <option value="">Unassigned</option>
+              {salesReps.map((rep) => (
+                <option key={rep.id} value={rep.id}>
+                  {rep.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
             <label className="label">Status</label>
             <select className="select" value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="scheduled">Scheduled</option>
@@ -132,7 +149,7 @@ export default function JobsPage() {
             <label className="label">Scheduled start</label>
             <input
               className="input"
-              placeholder="2026-01-24T08:00:00"
+              type="date"
               value={scheduledStart}
               onChange={(e) => setScheduledStart(e.target.value)}
             />
@@ -141,7 +158,7 @@ export default function JobsPage() {
             <label className="label">Scheduled end</label>
             <input
               className="input"
-              placeholder="2026-01-24T16:00:00"
+              type="date"
               value={scheduledEnd}
               onChange={(e) => setScheduledEnd(e.target.value)}
             />
@@ -198,6 +215,7 @@ export default function JobsPage() {
                 <th>Job</th>
                 <th>Customer</th>
                 <th>Crew</th>
+                <th>Sales rep</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -208,6 +226,10 @@ export default function JobsPage() {
                   <td>Job #{job.id}</td>
                   <td>Customer #{job.customer_id}</td>
                   <td>{job.crew_id ? `Crew #${job.crew_id}` : "Unassigned"}</td>
+                  <td>
+                    {salesReps.find((rep) => rep.id === job.sales_rep_id)?.name ||
+                      (job.sales_rep_id ? `Rep #${job.sales_rep_id}` : "Unassigned")}
+                  </td>
                   <td>
                     <StatusChip status={job.status} />
                   </td>

@@ -276,6 +276,8 @@ def create_job(payload: schemas.JobCreate, db: Session = Depends(get_db)):
             raise HTTPException(status_code=400, detail="Estimate does not match customer")
     if payload.crew_id:
         get_or_404(db, models.Crew, payload.crew_id, "Crew")
+    if payload.sales_rep_id:
+        get_or_404(db, models.SalesRep, payload.sales_rep_id, "Sales rep")
     validate_status(payload.status, {"scheduled", "in_progress", "completed", "canceled"}, "job")
     return crud.create_job(db, payload, payload.tasks, payload.equipment_ids)
 
@@ -286,6 +288,7 @@ def list_jobs(
     status_filter: str | None = Query(None, alias="status"),
     crew_id: int | None = None,
     customer_id: int | None = None,
+    sales_rep_id: int | None = None,
     start: datetime | None = None,
     end: datetime | None = None,
     db: Session = Depends(get_db),
@@ -296,6 +299,7 @@ def list_jobs(
         status=status_filter,
         crew_id=crew_id,
         customer_id=customer_id,
+        sales_rep_id=sales_rep_id,
         start=start,
         end=end,
     )
@@ -312,6 +316,8 @@ def update_job(job_id: int, payload: schemas.JobUpdate, db: Session = Depends(ge
     updates = payload.model_dump(exclude_unset=True)
     if updates.get("status"):
         validate_status(updates["status"], {"scheduled", "in_progress", "completed", "canceled"}, "job")
+    if updates.get("sales_rep_id"):
+        get_or_404(db, models.SalesRep, updates["sales_rep_id"], "Sales rep")
     return crud.update_job(db, job, **updates)
 
 
@@ -532,6 +538,36 @@ def update_equipment(equipment_id: int, payload: schemas.EquipmentUpdate, db: Se
 def delete_equipment(equipment_id: int, db: Session = Depends(get_db)):
     equipment = get_or_404(db, models.Equipment, equipment_id, "Equipment")
     db.delete(equipment)
+    db.commit()
+    return {"ok": True}
+
+
+# Sales reps
+@app.post("/sales-reps", response_model=schemas.SalesRepOut)
+def create_sales_rep(payload: schemas.SalesRepCreate, db: Session = Depends(get_db)):
+    return crud.create_sales_rep(db, payload)
+
+
+@app.get("/sales-reps", response_model=list[schemas.SalesRepOut])
+def list_sales_reps(db: Session = Depends(get_db)):
+    return crud.list_sales_reps(db)
+
+
+@app.get("/sales-reps/{sales_rep_id}", response_model=schemas.SalesRepOut)
+def get_sales_rep(sales_rep_id: int, db: Session = Depends(get_db)):
+    return get_or_404(db, models.SalesRep, sales_rep_id, "Sales rep")
+
+
+@app.put("/sales-reps/{sales_rep_id}", response_model=schemas.SalesRepOut)
+def update_sales_rep(sales_rep_id: int, payload: schemas.SalesRepUpdate, db: Session = Depends(get_db)):
+    sales_rep = get_or_404(db, models.SalesRep, sales_rep_id, "Sales rep")
+    return crud.update_sales_rep(db, sales_rep, payload)
+
+
+@app.delete("/sales-reps/{sales_rep_id}")
+def delete_sales_rep(sales_rep_id: int, db: Session = Depends(get_db)):
+    sales_rep = get_or_404(db, models.SalesRep, sales_rep_id, "Sales rep")
+    db.delete(sales_rep)
     db.commit()
     return {"ok": True}
 

@@ -119,6 +119,19 @@ class Crew(Base):
     jobs = relationship("Job", back_populates="crew")
 
 
+class SalesRep(Base):
+    __tablename__ = "sales_reps"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(255), default="")
+    phone: Mapped[str] = mapped_column(String(50), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    jobs = relationship("Job", back_populates="sales_rep")
+
+
 class CrewMember(Base):
     __tablename__ = "crew_members"
     __table_args__ = (UniqueConstraint("crew_id", "user_id", name="uq_crew_member"),)
@@ -140,6 +153,7 @@ class Job(Base):
     scheduled_start: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     scheduled_end: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     crew_id: Mapped[int | None] = mapped_column(ForeignKey("crews.id"), nullable=True)
+    sales_rep_id: Mapped[int | None] = mapped_column(ForeignKey("sales_reps.id"), nullable=True)
     total: Mapped[float] = mapped_column(Float, default=0.0)
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -149,6 +163,7 @@ class Job(Base):
     customer = relationship("Customer", back_populates="jobs")
     estimate = relationship("Estimate", back_populates="jobs")
     crew = relationship("Crew", back_populates="jobs")
+    sales_rep = relationship("SalesRep", back_populates="jobs")
     tasks = relationship("JobTask", back_populates="job", cascade="all, delete-orphan")
     equipment_links = relationship("JobEquipment", back_populates="job", cascade="all, delete-orphan")
     invoice = relationship("Invoice", back_populates="job", uselist=False)

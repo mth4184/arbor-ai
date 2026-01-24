@@ -68,6 +68,13 @@ def seed_db():
     db.add_all(crews)
     db.flush()
 
+    sales_reps = [
+        models.SalesRep(name="Jordan Sales", email="jordan@arborgold.demo", phone="555-2001"),
+        models.SalesRep(name="Taylor Sales", email="taylor@arborgold.demo", phone="555-2002"),
+    ]
+    db.add_all(sales_reps)
+    db.flush()
+
     db.add_all(
         [
             models.CrewMember(crew_id=crews[0].id, user_id=users[2].id),
@@ -188,6 +195,7 @@ def seed_db():
             scheduled_start=start,
             scheduled_end=start + timedelta(hours=6),
             crew_id=crew.id,
+            sales_rep_id=random.choice(sales_reps).id if sales_reps else None,
             total=estimate.total,
             notes="Ensure permits on file.",
             completed_at=start + timedelta(hours=6) if random.random() > 0.6 else None,
