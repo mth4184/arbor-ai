@@ -6,8 +6,10 @@ import StatusChip from "../components/StatusChip";
 import NumberInput from "../components/NumberInput";
 
 export default function InvoicesPage() {
+  const [customers, setCustomers] = useState<any[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [customerId, setCustomerId] = useState<string>("");
   const [jobId, setJobId] = useState<string>("");
   const [subtotal, setSubtotal] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
@@ -15,24 +17,36 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState("");
 
   async function refresh() {
-    const js = await apiGet("/jobs");
-    setJobs(js);
-    if (!jobId && js.length) setJobId(String(js[0].id));
-    setInvoices(await apiGet("/invoices", { status: statusFilter || undefined, q: search }));
+    const [customerItems, jobItems, invoiceItems] = await Promise.all([
+      apiGet("/customers"),
+      apiGet("/jobs"),
+      apiGet("/invoices", { status: statusFilter || undefined, q: search }),
+    ]);
+    setCustomers(customerItems);
+    setJobs(jobItems);
+    setInvoices(invoiceItems);
+    if (!customerId && customerItems.length) setCustomerId(String(customerItems[0].id));
   }
   useEffect(() => { refresh(); }, [statusFilter, search]);
   useEffect(() => {
+    const filteredJobs = jobs.filter((job) => String(job.customer_id) === customerId);
+    if (!jobId && filteredJobs.length) {
+      setJobId(String(filteredJobs[0].id));
+    }
+    if (jobId && !filteredJobs.some((job) => String(job.id) === jobId)) {
+      setJobId("");
+    }
     const job = jobs.find((item) => String(item.id) === jobId);
     if (job) setSubtotal(job.total);
-  }, [jobId, jobs]);
+  }, [customerId, jobId, jobs]);
 
   async function createInvoice() {
-    if (!jobId) return;
+    if (!jobId || !customerId) return;
     const job = jobs.find((j) => j.id === Number(jobId));
     if (!job) return;
     const taxAmount = Number(((subtotal * taxRate) / 100).toFixed(2));
     await apiPost("/invoices", {
-      customer_id: job.customer_id,
+      customer_id: Number(customerId),
       job_id: Number(jobId),
       subtotal,
       tax: taxAmount,
@@ -69,6 +83,21 @@ export default function InvoicesPage() {
         </div>
         <div className="form-grid">
           <div className="field">
+            <label className="label" htmlFor="invoice-customer">Customer</label>
+            <select
+              id="invoice-customer"
+              className="select"
+              value={customerId}
+              onChange={(e) => setCustomerId(e.target.value)}
+            >
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
             <label className="label" htmlFor="invoice-job">Job</label>
             <select
               id="invoice-job"
@@ -76,9 +105,13 @@ export default function InvoicesPage() {
               value={jobId}
               onChange={e=>setJobId(e.target.value)}
             >
-              {jobs.map(j => (
-                <option key={j.id} value={j.id}>Job #{j.id}</option>
-              ))}
+              {jobs
+                .filter((job) => String(job.customer_id) === customerId)
+                .map((j) => (
+                  <option key={j.id} value={j.id}>
+                    Job #{j.id}
+                  </option>
+                ))}
             </select>
           </div>
           <div className="field">
@@ -149,7 +182,7 @@ export default function InvoicesPage() {
             <tbody>
               {invoices.map(i => (
                 <tr key={i.id}>
-                  <td>Invoice #{i.id}</td>
+                  <td>{customers.find((c) => c.id === i.customer_id)?.name || "Customer"} Invoice #{i.id}</td>
                   <td>Job #{i.job_id}</td>
                   <td>${i.total}</td>
                   <td>

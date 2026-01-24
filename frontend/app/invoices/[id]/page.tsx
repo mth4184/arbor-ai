@@ -10,6 +10,7 @@ export default function InvoiceDetailPage() {
   const params = useParams();
   const id = params?.id as string;
   const [invoice, setInvoice] = useState<any | null>(null);
+  const [customerName, setCustomerName] = useState<string>("");
   const [attachments, setAttachments] = useState<any[]>([]);
   const [taxRate, setTaxRate] = useState(0);
   const [paymentAmount, setPaymentAmount] = useState(0);
@@ -27,6 +28,10 @@ export default function InvoiceDetailPage() {
     const rate = inv.subtotal ? (inv.tax / inv.subtotal) * 100 : 0;
     setTaxRate(Number(rate.toFixed(2)));
     setAttachments(files || []);
+    if (inv?.customer_id) {
+      const customer = await apiGet(`/customers/${inv.customer_id}`);
+      setCustomerName(customer?.name || "");
+    }
   }
 
   useEffect(() => {
@@ -78,7 +83,9 @@ export default function InvoiceDetailPage() {
       <header className="page-header">
         <div>
           <p className="eyebrow">Invoice</p>
-          <h2 className="page-title">Invoice #{invoice.id}</h2>
+          <h2 className="page-title">
+            {customerName ? `${customerName} Invoice #${invoice.id}` : `Invoice #${invoice.id}`}
+          </h2>
           <p className="page-subtitle">Track payments and balances.</p>
         </div>
         <button className="btn btn-primary" onClick={save}>

@@ -62,8 +62,8 @@ def seed_db():
     db.flush()
 
     crews = [
-        models.Crew(name="Evergreen Team", color="#3b7a57"),
-        models.Crew(name="Summit Crew", color="#7c5e3b"),
+        models.Crew(name="Evergreen Team", type="GTC", color="#3b7a57"),
+        models.Crew(name="Summit Crew", type="PHC", color="#7c5e3b"),
     ]
     db.add_all(crews)
     db.flush()

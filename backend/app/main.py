@@ -419,6 +419,8 @@ def add_payment(invoice_id: int, payload: schemas.PaymentCreate, db: Session = D
 # Crews
 @app.post("/crews", response_model=schemas.CrewOut)
 def create_crew(payload: schemas.CrewCreate, db: Session = Depends(get_db)):
+    if payload.type not in {"GTC", "PHC"}:
+        raise HTTPException(status_code=400, detail="Invalid crew type")
     return crud.create_crew(db, payload)
 
 
@@ -435,6 +437,8 @@ def get_crew(crew_id: int, db: Session = Depends(get_db)):
 @app.put("/crews/{crew_id}", response_model=schemas.CrewOut)
 def update_crew(crew_id: int, payload: schemas.CrewUpdate, db: Session = Depends(get_db)):
     crew = get_or_404(db, models.Crew, crew_id, "Crew")
+    if payload.type and payload.type not in {"GTC", "PHC"}:
+        raise HTTPException(status_code=400, detail="Invalid crew type")
     return crud.update_crew(db, crew, payload)
 
 

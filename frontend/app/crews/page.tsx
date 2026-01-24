@@ -6,6 +6,7 @@ import { apiGet, apiPost } from "../api";
 
 const emptyForm = {
   name: "",
+  type: "GTC",
   color: "",
   notes: "",
   member_ids: "",
@@ -31,6 +32,7 @@ export default function CrewsPage() {
       .filter(Boolean);
     await apiPost("/crews", {
       name: form.name,
+      type: form.type,
       color: form.color || null,
       notes: form.notes,
       member_ids: memberIds,
@@ -68,6 +70,17 @@ export default function CrewsPage() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
+          </div>
+          <div className="field">
+            <label className="label">Type</label>
+            <select
+              className="select"
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+            >
+              <option value="GTC">GTC</option>
+              <option value="PHC">PHC</option>
+            </select>
           </div>
           <div className="field">
             <label className="label">Color</label>
@@ -112,6 +125,7 @@ export default function CrewsPage() {
             <thead>
               <tr>
                 <th>Crew</th>
+                <th>Type</th>
                 <th>Members</th>
                 <th></th>
               </tr>
@@ -120,6 +134,7 @@ export default function CrewsPage() {
               {crews.map((crew) => (
                 <tr key={crew.id}>
                   <td>{crew.name}</td>
+                  <td>{crew.type}</td>
                   <td>{crew.members?.length ?? 0}</td>
                   <td>
                     <Link className="btn btn-secondary" href={`/crews/${crew.id}`}>

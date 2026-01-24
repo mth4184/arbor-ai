@@ -108,6 +108,7 @@ class Crew(Base):
     __tablename__ = "crews"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
+    type: Mapped[str] = mapped_column(String(20), default="GTC")
     color: Mapped[str | None] = mapped_column(String(50), nullable=True)
     notes: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

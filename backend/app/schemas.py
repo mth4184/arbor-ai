@@ -339,6 +339,7 @@ class CrewMemberOut(CrewMemberBase):
 
 class CrewBase(BaseModel):
     name: str
+    type: str = "GTC"
     color: Optional[str] = None
     notes: str = ""
 
@@ -349,6 +350,7 @@ class CrewCreate(CrewBase):
 
 class CrewUpdate(BaseModel):
     name: Optional[str] = None
+    type: Optional[str] = None
     color: Optional[str] = None
     notes: Optional[str] = None
     member_ids: Optional[List[int]] = None

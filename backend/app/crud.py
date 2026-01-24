@@ -321,7 +321,7 @@ def record_payment(db: Session, invoice: models.Invoice, payload):
 
 
 def create_crew(db: Session, payload):
-    crew = models.Crew(name=payload.name, color=payload.color, notes=payload.notes)
+    crew = models.Crew(name=payload.name, type=payload.type, color=payload.color, notes=payload.notes)
     if payload.member_ids:
         crew.members = [models.CrewMember(user_id=uid) for uid in payload.member_ids]
     db.add(crew)
@@ -331,7 +331,7 @@ def create_crew(db: Session, payload):
 
 
 def update_crew(db: Session, crew: models.Crew, payload):
-    for key in ["name", "color", "notes"]:
+    for key in ["name", "type", "color", "notes"]:
         value = getattr(payload, key, None)
         if value is not None:
             setattr(crew, key, value)

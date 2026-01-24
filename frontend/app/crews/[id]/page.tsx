@@ -36,6 +36,7 @@ export default function CrewDetailPage() {
       .filter(Boolean);
     const updated = await apiPut(`/crews/${id}`, {
       name: crew.name,
+      type: crew.type,
       color: crew.color,
       notes: crew.notes,
       member_ids: ids,
@@ -81,6 +82,17 @@ export default function CrewDetailPage() {
                 value={crew.name}
                 onChange={(e) => setCrew({ ...crew, name: e.target.value })}
               />
+            </div>
+            <div className="field">
+              <label className="label">Type</label>
+              <select
+                className="select"
+                value={crew.type}
+                onChange={(e) => setCrew({ ...crew, type: e.target.value })}
+              >
+                <option value="GTC">GTC</option>
+                <option value="PHC">PHC</option>
+              </select>
             </div>
             <div className="field">
               <label className="label">Color</label>
