@@ -20,3 +20,6 @@ def get_db():
     finally:
         db.close()
 
+def get_engine():
+    return engine
+
