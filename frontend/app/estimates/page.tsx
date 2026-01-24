@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { apiGet, apiPost } from "../api";
 import StatusChip from "../components/StatusChip";
 import NumberInput from "../components/NumberInput";
@@ -14,8 +15,10 @@ type LineItem = {
 };
 
 export default function EstimatesPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<any[]>([]);
   const [estimates, setEstimates] = useState<any[]>([]);
+  const [approvalEstimates, setApprovalEstimates] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
   const [status, setStatus] = useState("draft");
   const [taxRate, setTaxRate] = useState(0);
@@ -28,22 +31,40 @@ export default function EstimatesPage() {
   ]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [activeTab, setActiveTab] = useState<"builder" | "approve">("builder");
+  const [selectedEstimateId, setSelectedEstimateId] = useState<string>("");
+  const [invoiceDate, setInvoiceDate] = useState("");
+  const [dueDate, setDueDate] = useState("");
 
   async function refresh() {
-    const [customerItems, estimateItems] = await Promise.all([
+    const [customerItems, estimateItems, sentEstimates, approvedEstimates] = await Promise.all([
       apiGet("/customers"),
       apiGet("/estimates", { q: search, status: statusFilter || undefined }),
+      apiGet("/estimates", { status: "sent" }),
+      apiGet("/estimates", { status: "approved" }),
     ]);
     setCustomers(customerItems);
     setEstimates(estimateItems);
+    const approvalList = [...(sentEstimates || []), ...(approvedEstimates || [])];
+    setApprovalEstimates(approvalList);
     if (!customerId && customerItems.length) {
       setCustomerId(String(customerItems[0].id));
+    }
+    if (!selectedEstimateId && approvalList.length) {
+      setSelectedEstimateId(String(approvalList[0].id));
     }
   }
 
   useEffect(() => {
     refresh();
   }, [search, statusFilter]);
+
+  useEffect(() => {
+    if (!invoiceDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      setInvoiceDate(today);
+    }
+  }, [invoiceDate]);
 
   function updateItem(index: number, key: keyof LineItem, value: string | number) {
     setLineItems((items) =>
@@ -86,6 +107,19 @@ export default function EstimatesPage() {
     await refresh();
   }
 
+  async function approveAndInvoice() {
+    if (!selectedEstimateId) return;
+    const now = new Date();
+    const time = now.toISOString().slice(11, 19);
+    const invoice = await apiPost(`/estimates/${selectedEstimateId}/approve-invoice`, {
+      issued_at: invoiceDate ? `${invoiceDate}T${time}` : null,
+      due_date: dueDate ? `${dueDate}T00:00:00` : null,
+    });
+    if (invoice?.id) {
+      router.push(`/invoices/${invoice.id}`);
+    }
+  }
+
   return (
     <main className="page">
       <header className="page-header">
@@ -96,12 +130,24 @@ export default function EstimatesPage() {
             Build line-item proposals and send them through approval.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={createEstimate}>
-          New Estimate
-        </button>
+        <div className="table-actions">
+          <button
+            className={activeTab === "builder" ? "btn btn-primary" : "btn btn-secondary"}
+            onClick={() => setActiveTab("builder")}
+          >
+            New Estimate
+          </button>
+          <button
+            className={activeTab === "approve" ? "btn btn-primary" : "btn btn-secondary"}
+            onClick={() => setActiveTab("approve")}
+          >
+            Approve & Invoice
+          </button>
+        </div>
       </header>
 
-      <section className="card">
+      {activeTab === "builder" && (
+        <section className="card">
         <div className="card-header">
           <div>
             <div className="card-title">Create estimate</div>
@@ -222,7 +268,83 @@ export default function EstimatesPage() {
             ))}
           </div>
         </div>
+        <div className="form-actions">
+          <button className="btn btn-primary" onClick={createEstimate}>
+            Create Estimate
+          </button>
+        </div>
       </section>
+      )}
+
+      {activeTab === "approve" && (
+        <section className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">Approve estimate & create invoice</div>
+              <p className="card-subtitle">
+                Once approved, this will create an invoice and take you to billing.
+              </p>
+            </div>
+            <span className="badge">Workflow</span>
+          </div>
+          <div className="form-grid">
+            <div className="field">
+              <label className="label">Estimate</label>
+              <select
+                className="select"
+                value={selectedEstimateId}
+                onChange={(e) => setSelectedEstimateId(e.target.value)}
+              >
+                {approvalEstimates.map((estimate) => (
+                  <option key={estimate.id} value={estimate.id}>
+                    Estimate #{estimate.id} · Customer #{estimate.customer_id}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label className="label">Invoice date</label>
+              <input
+                className="input"
+                type="date"
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label className="label">Due date</label>
+              <input
+                className="input"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="form-actions">
+            <button className="btn btn-primary" onClick={approveAndInvoice}>
+              Approve + Create Invoice
+            </button>
+          </div>
+          <div className="section">
+            {approvalEstimates.length === 0 ? (
+              <p className="card-subtitle">No sent or approved estimates available.</p>
+            ) : (
+              <ul className="list">
+                {approvalEstimates.slice(0, 5).map((estimate) => (
+                  <li key={estimate.id} className="list-item">
+                    <div>
+                      <div className="list-title">Estimate #{estimate.id}</div>
+                      <div className="list-meta">Customer #{estimate.customer_id}</div>
+                    </div>
+                    <StatusChip status={estimate.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="card section">
         <div className="card-header">

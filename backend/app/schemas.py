@@ -194,6 +194,11 @@ class EstimateConvertRequest(BaseModel):
     equipment_ids: List[int] = []
 
 
+class EstimateInvoiceRequest(BaseModel):
+    issued_at: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+
+
 class JobTaskUpdate(BaseModel):
     title: Optional[str] = None
     completed: Optional[bool] = None

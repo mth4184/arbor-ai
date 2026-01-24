@@ -216,6 +216,56 @@ def convert_estimate_to_job(
     return crud.create_job(db, job_payload, payload.tasks, payload.equipment_ids)
 
 
+@app.post("/estimates/{estimate_id}/approve-invoice", response_model=schemas.InvoiceOut)
+def approve_estimate_and_invoice(
+    estimate_id: int,
+    payload: schemas.EstimateInvoiceRequest,
+    db: Session = Depends(get_db),
+):
+    estimate = get_or_404(db, models.Estimate, estimate_id, "Estimate")
+    if estimate.status != "approved":
+        estimate.status = "approved"
+        if not estimate.approved_at:
+            estimate.approved_at = datetime.utcnow()
+    job = (
+        db.query(models.Job)
+        .filter(models.Job.estimate_id == estimate.id)
+        .order_by(models.Job.id.desc())
+        .first()
+    )
+    if not job:
+        job = models.Job(
+            customer_id=estimate.customer_id,
+            estimate_id=estimate.id,
+            status="scheduled",
+            total=estimate.total,
+            notes=estimate.notes,
+        )
+        db.add(job)
+        db.flush()
+    if job.invoice:
+        db.commit()
+        db.refresh(job.invoice)
+        return job.invoice
+
+    subtotal = max(estimate.total - estimate.tax, 0.0)
+    invoice = models.Invoice(
+        customer_id=estimate.customer_id,
+        job_id=job.id,
+        status="unpaid",
+        subtotal=subtotal,
+        tax=estimate.tax,
+        total=estimate.total,
+        issued_at=payload.issued_at or datetime.utcnow(),
+        due_date=payload.due_date,
+        notes=estimate.notes,
+    )
+    db.add(invoice)
+    db.commit()
+    db.refresh(invoice)
+    return invoice
+
+
 # Jobs
 @app.post("/jobs", response_model=schemas.JobOut)
 def create_job(payload: schemas.JobCreate, db: Session = Depends(get_db)):
