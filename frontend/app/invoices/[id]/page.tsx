@@ -118,16 +118,39 @@ export default function InvoiceDetailPage() {
     const filename = customerName
       ? `${customerName.replace(/\\s+/g, "-").toLowerCase()}-invoice-${invoice.id}.pdf`
       : `invoice-${invoice.id}.pdf`;
-    html2pdf()
+    const element = pdfRef.current;
+    const previousStyle = {
+      position: element.style.position,
+      left: element.style.left,
+      top: element.style.top,
+      zIndex: element.style.zIndex,
+      background: element.style.background,
+    };
+
+    element.style.position = "fixed";
+    element.style.left = "0";
+    element.style.top = "0";
+    element.style.zIndex = "9999";
+    element.style.background = "#ffffff";
+
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(true)));
+
+    await html2pdf()
       .set({
         margin: [10, 10, 10, 10],
         filename,
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       })
-      .from(pdfRef.current)
+      .from(element)
       .save();
+
+    element.style.position = previousStyle.position;
+    element.style.left = previousStyle.left;
+    element.style.top = previousStyle.top;
+    element.style.zIndex = previousStyle.zIndex;
+    element.style.background = previousStyle.background;
   }
 
   if (!invoice) {
