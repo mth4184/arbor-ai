@@ -26,6 +26,7 @@ export default function InvoiceDetailPage() {
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [attachmentCaption, setAttachmentCaption] = useState("");
   const pdfRef = useRef<HTMLDivElement | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   const paidTotal = invoice?.payments?.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
   const balanceDue = Math.max((invoice?.total || 0) - paidTotal, 0);
@@ -77,12 +78,19 @@ export default function InvoiceDetailPage() {
 
   async function save() {
     if (!invoice) return;
-    const updated = await apiPut(`/invoices/${id}`, {
-      ...invoice,
-      issued_at: invoiceDate ? `${invoiceDate}T00:00:00` : null,
-      due_date: dueDate ? `${dueDate}T00:00:00` : null,
-    });
-    setInvoice(updated);
+    setSaveStatus("saving");
+    try {
+      const updated = await apiPut(`/invoices/${id}`, {
+        ...invoice,
+        issued_at: invoiceDate ? `${invoiceDate}T00:00:00` : null,
+        due_date: dueDate ? `${dueDate}T00:00:00` : null,
+      });
+      setInvoice(updated);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 1500);
+    } catch (error) {
+      setSaveStatus("error");
+    }
   }
 
   async function recordPayment() {
@@ -173,9 +181,9 @@ export default function InvoiceDetailPage() {
           <button className="btn btn-secondary" onClick={downloadPdf}>
             Download PDF
           </button>
-          <button className="btn btn-primary" onClick={save}>
-            Save Changes
-          </button>
+        <button className="btn btn-primary" onClick={save} disabled={saveStatus === "saving"}>
+          {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save Changes"}
+        </button>
         </div>
       </header>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiDelete, apiGet, apiPost, apiPut } from "../../api";
 import StatusChip from "../../components/StatusChip";
@@ -9,6 +9,7 @@ import NumberInput from "../../components/NumberInput";
 
 export default function JobDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
   const [job, setJob] = useState<any | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -24,6 +25,8 @@ export default function JobDetailPage() {
   const [equipmentId, setEquipmentId] = useState("");
   const [invoiceTaxRate, setInvoiceTaxRate] = useState(0);
   const [invoiceResult, setInvoiceResult] = useState<any | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [completeStatus, setCompleteStatus] = useState<"idle" | "saving" | "error">("idle");
 
   async function load() {
     const [jobItem, files, equipmentItems, crewItems, salesRepItems, jobTypeItems] = await Promise.all([
@@ -49,8 +52,15 @@ export default function JobDetailPage() {
 
   async function saveJob() {
     if (!job) return;
-    const updated = await apiPut(`/jobs/${id}`, job);
-    setJob(updated);
+    setSaveStatus("saving");
+    try {
+      const updated = await apiPut(`/jobs/${id}`, job);
+      setJob(updated);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 1500);
+    } catch (error) {
+      setSaveStatus("error");
+    }
   }
 
   async function addJobType() {
@@ -103,10 +113,20 @@ export default function JobDetailPage() {
   async function completeJob() {
     const subtotal = Number(job?.total || 0);
     const taxAmount = Number(((subtotal * invoiceTaxRate) / 100).toFixed(2));
-    const invoice = await apiPost(`/jobs/${id}/complete`, {
-      invoice_tax: taxAmount,
-    });
-    setInvoiceResult(invoice);
+    setCompleteStatus("saving");
+    try {
+      const invoice = await apiPost(`/jobs/${id}/complete`, {
+        invoice_tax: taxAmount,
+      });
+      setInvoiceResult(invoice);
+      if (invoice?.id) {
+        router.push(`/invoices/${invoice.id}`);
+      } else {
+        setCompleteStatus("error");
+      }
+    } catch (error) {
+      setCompleteStatus("error");
+    }
   }
 
   if (!job) {
@@ -126,12 +146,19 @@ export default function JobDetailPage() {
           <p className="page-subtitle">Manage crew, schedule, and tasks.</p>
         </div>
         <div className="table-actions">
-          <button className="btn btn-secondary" onClick={saveJob}>
-            Save Changes
+          <button className="btn btn-secondary" onClick={saveJob} disabled={saveStatus === "saving"}>
+            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save Changes"}
           </button>
-          <button className="btn btn-primary" onClick={completeJob}>
-            Mark Complete + Create Invoice
+          <button
+            className="btn btn-primary"
+            onClick={completeJob}
+            disabled={completeStatus === "saving"}
+          >
+            {completeStatus === "saving" ? "Creating Invoice..." : "Mark Complete + Create Invoice"}
           </button>
+          {completeStatus === "error" && (
+            <span className="card-subtitle">Unable to create invoice.</span>
+          )}
         </div>
       </header>
 
