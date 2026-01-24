@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet, apiPost, apiPut } from "../api";
+import NumberInput from "../components/NumberInput";
 
 const emptyUser = {
   name: "",
@@ -94,11 +95,12 @@ export default function SettingsPage() {
             </div>
             <div className="field">
               <label className="label">Default tax rate</label>
-              <input
+              <NumberInput
                 className="input"
-                type="number"
                 value={settings.default_tax_rate}
-                onChange={(e) => setSettings({ ...settings, default_tax_rate: Number(e.target.value) })}
+                onValueChange={(value) =>
+                  setSettings({ ...settings, default_tax_rate: value })
+                }
               />
             </div>
           </div>

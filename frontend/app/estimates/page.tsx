@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiGet, apiPost } from "../api";
 import StatusChip from "../components/StatusChip";
+import NumberInput from "../components/NumberInput";
 
 type LineItem = {
   name: string;
@@ -128,20 +129,18 @@ export default function EstimatesPage() {
           </div>
           <div className="field">
             <label className="label">Tax</label>
-            <input
+            <NumberInput
               className="input"
-              type="number"
               value={tax}
-              onChange={(e) => setTax(Number(e.target.value))}
+              onValueChange={setTax}
             />
           </div>
           <div className="field">
             <label className="label">Discount</label>
-            <input
+            <NumberInput
               className="input"
-              type="number"
               value={discount}
-              onChange={(e) => setDiscount(Number(e.target.value))}
+              onValueChange={setDiscount}
             />
           </div>
           <div className="field field-full">
@@ -201,20 +200,18 @@ export default function EstimatesPage() {
                 </div>
                 <div className="field">
                   <label className="label">Qty</label>
-                  <input
+                  <NumberInput
                     className="input"
-                    type="number"
                     value={item.qty}
-                    onChange={(e) => updateItem(index, "qty", Number(e.target.value))}
+                    onValueChange={(value) => updateItem(index, "qty", value)}
                   />
                 </div>
                 <div className="field">
                   <label className="label">Unit price</label>
-                  <input
+                  <NumberInput
                     className="input"
-                    type="number"
                     value={item.unit_price}
-                    onChange={(e) => updateItem(index, "unit_price", Number(e.target.value))}
+                    onValueChange={(value) => updateItem(index, "unit_price", value)}
                   />
                 </div>
               </div>

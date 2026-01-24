@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiGet, apiPost } from "../api";
 import StatusChip from "../components/StatusChip";
+import NumberInput from "../components/NumberInput";
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -147,11 +148,10 @@ export default function JobsPage() {
           </div>
           <div className="field">
             <label className="label">Total</label>
-            <input
+            <NumberInput
               className="input"
-              type="number"
               value={total}
-              onChange={(e) => setTotal(Number(e.target.value))}
+              onValueChange={setTotal}
             />
           </div>
           <div className="field field-full">

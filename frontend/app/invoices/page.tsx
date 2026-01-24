@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiGet, apiPost } from "../api";
 import StatusChip from "../components/StatusChip";
+import NumberInput from "../components/NumberInput";
 
 export default function InvoicesPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -81,22 +82,20 @@ export default function InvoicesPage() {
           </div>
           <div className="field">
             <label className="label" htmlFor="invoice-subtotal">Subtotal</label>
-            <input
+            <NumberInput
               id="invoice-subtotal"
               className="input"
-              type="number"
               value={subtotal}
-              onChange={e=>setSubtotal(Number(e.target.value))}
+              onValueChange={setSubtotal}
             />
           </div>
           <div className="field">
             <label className="label" htmlFor="invoice-tax">Tax</label>
-            <input
+            <NumberInput
               id="invoice-tax"
               className="input"
-              type="number"
               value={tax}
-              onChange={e=>setTax(Number(e.target.value))}
+              onValueChange={setTax}
             />
           </div>
           <div className="form-actions">

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { apiDelete, apiGet, apiPost, apiPut } from "../../api";
 import StatusChip from "../../components/StatusChip";
+import NumberInput from "../../components/NumberInput";
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -177,11 +178,10 @@ export default function JobDetailPage() {
             </div>
             <div className="field">
               <label className="label">Total</label>
-              <input
+              <NumberInput
                 className="input"
-                type="number"
                 value={job.total}
-                onChange={(e) => setJob({ ...job, total: Number(e.target.value) })}
+                onValueChange={(value) => setJob({ ...job, total: value })}
               />
             </div>
             <div className="field field-full">
@@ -194,11 +194,10 @@ export default function JobDetailPage() {
             </div>
             <div className="field">
               <label className="label">Invoice tax</label>
-              <input
+              <NumberInput
                 className="input"
-                type="number"
                 value={invoiceTax}
-                onChange={(e) => setInvoiceTax(Number(e.target.value))}
+                onValueChange={setInvoiceTax}
               />
             </div>
             {invoiceResult && (

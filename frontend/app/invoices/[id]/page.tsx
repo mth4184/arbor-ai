@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiGet, apiPost, apiPut } from "../../api";
 import StatusChip from "../../components/StatusChip";
+import NumberInput from "../../components/NumberInput";
 
 export default function InvoiceDetailPage() {
   const params = useParams();
@@ -106,26 +107,22 @@ export default function InvoiceDetailPage() {
             </div>
             <div className="field">
               <label className="label">Subtotal</label>
-              <input
+              <NumberInput
                 className="input"
-                type="number"
                 value={invoice.subtotal}
-                onChange={(e) => {
-                  const subtotal = Number(e.target.value);
-                  setInvoice({ ...invoice, subtotal, total: subtotal + invoice.tax });
-                }}
+                onValueChange={(subtotal) =>
+                  setInvoice({ ...invoice, subtotal, total: subtotal + invoice.tax })
+                }
               />
             </div>
             <div className="field">
               <label className="label">Tax</label>
-              <input
+              <NumberInput
                 className="input"
-                type="number"
                 value={invoice.tax}
-                onChange={(e) => {
-                  const tax = Number(e.target.value);
-                  setInvoice({ ...invoice, tax, total: invoice.subtotal + tax });
-                }}
+                onValueChange={(tax) =>
+                  setInvoice({ ...invoice, tax, total: invoice.subtotal + tax })
+                }
               />
             </div>
             <div className="field">
@@ -162,11 +159,10 @@ export default function InvoiceDetailPage() {
           <div className="form-grid">
             <div className="field">
               <label className="label">Amount</label>
-              <input
+              <NumberInput
                 className="input"
-                type="number"
                 value={paymentAmount}
-                onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                onValueChange={setPaymentAmount}
               />
             </div>
             <div className="field">
