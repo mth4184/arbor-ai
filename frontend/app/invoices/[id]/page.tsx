@@ -113,44 +113,42 @@ export default function InvoiceDetailPage() {
 
   async function downloadPdf() {
     if (!pdfRef.current || !invoice) return;
-    const module = await import("html2pdf.js");
-    const html2pdf = module.default || module;
+    const [{ default: html2canvas }, jsPdfModule] = await Promise.all([
+      import("html2canvas"),
+      import("jspdf"),
+    ]);
+    const jsPDF = jsPdfModule.jsPDF || (jsPdfModule as any).default;
     const filename = customerName
       ? `${customerName.replace(/\\s+/g, "-").toLowerCase()}-invoice-${invoice.id}.pdf`
       : `invoice-${invoice.id}.pdf`;
-    const element = pdfRef.current;
-    const previousStyle = {
-      position: element.style.position,
-      left: element.style.left,
-      top: element.style.top,
-      zIndex: element.style.zIndex,
-      background: element.style.background,
-    };
+    const source = pdfRef.current;
+    const clone = source.cloneNode(true) as HTMLDivElement;
+    clone.style.position = "fixed";
+    clone.style.left = "0";
+    clone.style.top = "0";
+    clone.style.zIndex = "9999";
+    clone.style.background = "#ffffff";
+    clone.style.opacity = "1";
+    clone.style.pointerEvents = "none";
+    document.body.appendChild(clone);
 
-    element.style.position = "fixed";
-    element.style.left = "0";
-    element.style.top = "0";
-    element.style.zIndex = "9999";
-    element.style.background = "#ffffff";
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
-    await new Promise((resolve) => requestAnimationFrame(() => resolve(true)));
+    const canvas = await html2canvas(clone, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      scrollX: 0,
+      scrollY: 0,
+    });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save(filename);
 
-    await html2pdf()
-      .set({
-        margin: [10, 10, 10, 10],
-        filename,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      })
-      .from(element)
-      .save();
-
-    element.style.position = previousStyle.position;
-    element.style.left = previousStyle.left;
-    element.style.top = previousStyle.top;
-    element.style.zIndex = previousStyle.zIndex;
-    element.style.background = previousStyle.background;
+    document.body.removeChild(clone);
   }
 
   if (!invoice) {
