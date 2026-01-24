@@ -22,6 +22,7 @@ export default function EstimateDetailPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
+  const [taxRate, setTaxRate] = useState(0);
   const [scheduleStart, setScheduleStart] = useState("");
   const [scheduleEnd, setScheduleEnd] = useState("");
   const [crewId, setCrewId] = useState<string>("");
@@ -35,7 +36,11 @@ export default function EstimateDetailPage() {
       apiGet("/crews"),
     ]);
     setEstimate(est);
-    setLineItems(est.line_items || []);
+    const items = est.line_items || [];
+    setLineItems(items);
+    const subtotal = items.reduce((sum: number, item: LineItem) => sum + item.qty * item.unit_price, 0);
+    const rate = subtotal ? (est.tax / subtotal) * 100 : 0;
+    setTaxRate(Number(rate.toFixed(2)));
     setAttachments(files || []);
     setCrews(crewItems || []);
     if (!crewId && crewItems.length) setCrewId(String(crewItems[0].id));
@@ -55,8 +60,11 @@ export default function EstimateDetailPage() {
 
   async function save() {
     if (!estimate) return;
+    const subtotal = lineItems.reduce((sum, item) => sum + item.qty * item.unit_price, 0);
+    const taxAmount = Number(((subtotal * taxRate) / 100).toFixed(2));
     const payload = {
       ...estimate,
+      tax: taxAmount,
       line_items: lineItems.map((item, idx) => ({
         ...item,
         total: item.qty * item.unit_price,
@@ -65,7 +73,14 @@ export default function EstimateDetailPage() {
     };
     const updated = await apiPut(`/estimates/${id}`, payload);
     setEstimate(updated);
-    setLineItems(updated.line_items || []);
+    const updatedItems = updated.line_items || [];
+    setLineItems(updatedItems);
+    const updatedSubtotal = updatedItems.reduce(
+      (sum: number, item: LineItem) => sum + item.qty * item.unit_price,
+      0,
+    );
+    const updatedRate = updatedSubtotal ? (updated.tax / updatedSubtotal) * 100 : taxRate;
+    setTaxRate(Number(updatedRate.toFixed(2)));
   }
 
   async function updateStatus(next: string) {
@@ -144,11 +159,12 @@ export default function EstimateDetailPage() {
               <input className="input" value={estimate.customer_id} disabled />
             </div>
             <div className="field">
-              <label className="label">Tax</label>
+              <label className="label">Tax rate</label>
               <NumberInput
                 className="input"
-                value={estimate.tax}
-                onValueChange={(value) => setEstimate({ ...estimate, tax: value })}
+                value={taxRate}
+                onValueChange={setTaxRate}
+                suffix="%"
               />
             </div>
             <div className="field">
@@ -157,6 +173,7 @@ export default function EstimateDetailPage() {
                 className="input"
                 value={estimate.discount}
                 onValueChange={(value) => setEstimate({ ...estimate, discount: value })}
+                prefix="$"
               />
             </div>
             <div className="field">

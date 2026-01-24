@@ -16,10 +16,14 @@ export default function SettingsPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [userForm, setUserForm] = useState(emptyUser);
   const [userError, setUserError] = useState<string | null>(null);
+  const [taxRatePercent, setTaxRatePercent] = useState(0);
 
   async function load() {
     const data = await apiGet("/settings");
     setSettings(data);
+    const defaultRate = data?.default_tax_rate ?? 0;
+    const percentRate = defaultRate <= 1 ? defaultRate * 100 : defaultRate;
+    setTaxRatePercent(Number(percentRate.toFixed(2)));
     const userList = await apiGet("/users");
     if (Array.isArray(userList)) {
       setUsers(userList);
@@ -35,7 +39,10 @@ export default function SettingsPage() {
 
   async function saveSettings() {
     if (!settings) return;
-    const updated = await apiPut("/settings", settings);
+    const updated = await apiPut("/settings", {
+      ...settings,
+      default_tax_rate: Number((taxRatePercent / 100).toFixed(4)),
+    });
     setSettings(updated);
   }
 
@@ -97,10 +104,9 @@ export default function SettingsPage() {
               <label className="label">Default tax rate</label>
               <NumberInput
                 className="input"
-                value={settings.default_tax_rate}
-                onValueChange={(value) =>
-                  setSettings({ ...settings, default_tax_rate: value })
-                }
+                value={taxRatePercent}
+                onValueChange={setTaxRatePercent}
+                suffix="%"
               />
             </div>
           </div>

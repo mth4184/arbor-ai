@@ -18,7 +18,7 @@ export default function EstimatesPage() {
   const [estimates, setEstimates] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
   const [status, setStatus] = useState("draft");
-  const [tax, setTax] = useState(0);
+  const [taxRate, setTaxRate] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [scope, setScope] = useState("");
   const [hazards, setHazards] = useState("");
@@ -64,18 +64,20 @@ export default function EstimatesPage() {
       total: item.qty * item.unit_price,
       sort_order: idx,
     }));
+    const subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
+    const taxAmount = Number(((subtotal * taxRate) / 100).toFixed(2));
     await apiPost("/estimates", {
       customer_id: Number(customerId),
       status,
       scope,
       hazards,
       equipment,
-      tax,
+      tax: taxAmount,
       discount,
       line_items: items,
     });
     setStatus("draft");
-    setTax(0);
+    setTaxRate(0);
     setDiscount(0);
     setScope("");
     setHazards("");
@@ -128,11 +130,12 @@ export default function EstimatesPage() {
             </select>
           </div>
           <div className="field">
-            <label className="label">Tax</label>
+            <label className="label">Tax rate</label>
             <NumberInput
               className="input"
-              value={tax}
-              onValueChange={setTax}
+              value={taxRate}
+              onValueChange={setTaxRate}
+              suffix="%"
             />
           </div>
           <div className="field">
@@ -141,6 +144,7 @@ export default function EstimatesPage() {
               className="input"
               value={discount}
               onValueChange={setDiscount}
+              prefix="$"
             />
           </div>
           <div className="field field-full">

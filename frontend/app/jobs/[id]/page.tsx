@@ -19,7 +19,7 @@ export default function JobDetailPage() {
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [attachmentCaption, setAttachmentCaption] = useState("");
   const [equipmentId, setEquipmentId] = useState("");
-  const [invoiceTax, setInvoiceTax] = useState(0);
+  const [invoiceTaxRate, setInvoiceTaxRate] = useState(0);
   const [invoiceResult, setInvoiceResult] = useState<any | null>(null);
 
   async function load() {
@@ -86,8 +86,10 @@ export default function JobDetailPage() {
   }
 
   async function completeJob() {
+    const subtotal = Number(job?.total || 0);
+    const taxAmount = Number(((subtotal * invoiceTaxRate) / 100).toFixed(2));
     const invoice = await apiPost(`/jobs/${id}/complete`, {
-      invoice_tax: invoiceTax,
+      invoice_tax: taxAmount,
     });
     setInvoiceResult(invoice);
   }
@@ -193,11 +195,12 @@ export default function JobDetailPage() {
               />
             </div>
             <div className="field">
-              <label className="label">Invoice tax</label>
+              <label className="label">Invoice tax rate</label>
               <NumberInput
                 className="input"
-                value={invoiceTax}
-                onValueChange={setInvoiceTax}
+                value={invoiceTaxRate}
+                onValueChange={setInvoiceTaxRate}
+                suffix="%"
               />
             </div>
             {invoiceResult && (

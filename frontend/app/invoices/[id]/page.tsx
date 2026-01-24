@@ -11,6 +11,7 @@ export default function InvoiceDetailPage() {
   const id = params?.id as string;
   const [invoice, setInvoice] = useState<any | null>(null);
   const [attachments, setAttachments] = useState<any[]>([]);
+  const [taxRate, setTaxRate] = useState(0);
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [paymentNote, setPaymentNote] = useState("");
@@ -23,6 +24,8 @@ export default function InvoiceDetailPage() {
       apiGet("/attachments", { entity_type: "invoice", entity_id: id }),
     ]);
     setInvoice(inv);
+    const rate = inv.subtotal ? (inv.tax / inv.subtotal) * 100 : 0;
+    setTaxRate(Number(rate.toFixed(2)));
     setAttachments(files || []);
   }
 
@@ -110,19 +113,24 @@ export default function InvoiceDetailPage() {
               <NumberInput
                 className="input"
                 value={invoice.subtotal}
-                onValueChange={(subtotal) =>
-                  setInvoice({ ...invoice, subtotal, total: subtotal + invoice.tax })
-                }
+                onValueChange={(subtotal) => {
+                  const taxAmount = Number(((subtotal * taxRate) / 100).toFixed(2));
+                  setInvoice({ ...invoice, subtotal, tax: taxAmount, total: subtotal + taxAmount });
+                }}
+                prefix="$"
               />
             </div>
             <div className="field">
-              <label className="label">Tax</label>
+              <label className="label">Tax rate</label>
               <NumberInput
                 className="input"
-                value={invoice.tax}
-                onValueChange={(tax) =>
-                  setInvoice({ ...invoice, tax, total: invoice.subtotal + tax })
-                }
+                value={taxRate}
+                onValueChange={(rate) => {
+                  setTaxRate(rate);
+                  const taxAmount = Number(((invoice.subtotal * rate) / 100).toFixed(2));
+                  setInvoice({ ...invoice, tax: taxAmount, total: invoice.subtotal + taxAmount });
+                }}
+                suffix="%"
               />
             </div>
             <div className="field">
@@ -163,6 +171,7 @@ export default function InvoiceDetailPage() {
                 className="input"
                 value={paymentAmount}
                 onValueChange={setPaymentAmount}
+                prefix="$"
               />
             </div>
             <div className="field">

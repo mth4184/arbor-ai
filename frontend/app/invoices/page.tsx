@@ -10,7 +10,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [jobId, setJobId] = useState<string>("");
   const [subtotal, setSubtotal] = useState(0);
-  const [tax, setTax] = useState(0);
+  const [taxRate, setTaxRate] = useState(0);
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
 
@@ -30,16 +30,17 @@ export default function InvoicesPage() {
     if (!jobId) return;
     const job = jobs.find((j) => j.id === Number(jobId));
     if (!job) return;
+    const taxAmount = Number(((subtotal * taxRate) / 100).toFixed(2));
     await apiPost("/invoices", {
       customer_id: job.customer_id,
       job_id: Number(jobId),
       subtotal,
-      tax,
-      total: subtotal + tax,
+      tax: taxAmount,
+      total: subtotal + taxAmount,
       status: "unpaid",
     });
     setSubtotal(0);
-    setTax(0);
+    setTaxRate(0);
     await refresh();
   }
 
@@ -87,15 +88,17 @@ export default function InvoicesPage() {
               className="input"
               value={subtotal}
               onValueChange={setSubtotal}
+              prefix="$"
             />
           </div>
           <div className="field">
-            <label className="label" htmlFor="invoice-tax">Tax</label>
+            <label className="label" htmlFor="invoice-tax">Tax rate</label>
             <NumberInput
               id="invoice-tax"
               className="input"
-              value={tax}
-              onValueChange={setTax}
+              value={taxRate}
+              onValueChange={setTaxRate}
+              suffix="%"
             />
           </div>
           <div className="form-actions">

@@ -152,6 +152,7 @@ export default function JobsPage() {
               className="input"
               value={total}
               onValueChange={setTotal}
+              prefix="$"
             />
           </div>
           <div className="field field-full">
