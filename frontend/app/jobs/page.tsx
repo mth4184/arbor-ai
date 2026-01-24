@@ -12,10 +12,13 @@ export default function JobsPage() {
   const [estimates, setEstimates] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
   const [salesReps, setSalesReps] = useState<any[]>([]);
+  const [jobTypes, setJobTypes] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
   const [estimateId, setEstimateId] = useState<string>("");
   const [crewId, setCrewId] = useState<string>("");
   const [salesRepId, setSalesRepId] = useState<string>("");
+  const [jobTypeId, setJobTypeId] = useState<string>("");
+  const [newJobType, setNewJobType] = useState("");
   const [status, setStatus] = useState("scheduled");
   const [scheduledStart, setScheduledStart] = useState("");
   const [scheduledEnd, setScheduledEnd] = useState("");
@@ -25,18 +28,20 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState("");
 
   async function refresh() {
-    const [jobItems, customerItems, estimateItems, crewItems, salesRepItems] = await Promise.all([
+    const [jobItems, customerItems, estimateItems, crewItems, salesRepItems, jobTypeItems] = await Promise.all([
       apiGet("/jobs", { q: search, status: statusFilter || undefined }),
       apiGet("/customers"),
       apiGet("/estimates"),
       apiGet("/crews"),
       apiGet("/sales-reps"),
+      apiGet("/job-types"),
     ]);
     setJobs(jobItems);
     setCustomers(customerItems);
     setEstimates(estimateItems);
     setCrews(crewItems);
     setSalesReps(salesRepItems);
+    setJobTypes(jobTypeItems);
     if (!customerId && customerItems.length) setCustomerId(String(customerItems[0].id));
   }
 
@@ -54,6 +59,7 @@ export default function JobsPage() {
       scheduled_end: scheduledEnd ? `${scheduledEnd}T00:00:00` : null,
       crew_id: crewId ? Number(crewId) : null,
       sales_rep_id: salesRepId ? Number(salesRepId) : null,
+      job_type_id: jobTypeId ? Number(jobTypeId) : null,
       total,
       notes,
       tasks: [],
@@ -62,11 +68,21 @@ export default function JobsPage() {
     setEstimateId("");
     setCrewId("");
     setSalesRepId("");
+    setJobTypeId("");
+    setNewJobType("");
     setScheduledStart("");
     setScheduledEnd("");
     setTotal(0);
     setNotes("");
     await refresh();
+  }
+
+  async function addJobType() {
+    if (!newJobType.trim()) return;
+    const created = await apiPost("/job-types", { name: newJobType.trim() });
+    setJobTypes([created, ...jobTypes]);
+    setJobTypeId(String(created.id));
+    setNewJobType("");
   }
 
   return (
@@ -135,6 +151,43 @@ export default function JobsPage() {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="field">
+            <label className="label">Job type</label>
+            <select
+              className="select"
+              value={jobTypeId || (newJobType ? "__new__" : "")}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "__new__") {
+                  setJobTypeId("");
+                } else {
+                  setJobTypeId(value);
+                  setNewJobType("");
+                }
+              }}
+            >
+              <option value="">Select type</option>
+              {jobTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+              <option value="__new__">Add new...</option>
+            </select>
+            {(jobTypeId === "" || newJobType) && (
+              <div className="form-actions section">
+                <input
+                  className="input"
+                  placeholder="New job type"
+                  value={newJobType}
+                  onChange={(e) => setNewJobType(e.target.value)}
+                />
+                <button className="btn btn-secondary" onClick={addJobType}>
+                  Add
+                </button>
+              </div>
+            )}
           </div>
           <div className="field">
             <label className="label">Status</label>
@@ -216,6 +269,7 @@ export default function JobsPage() {
                 <th>Customer</th>
                 <th>Crew</th>
                 <th>Sales rep</th>
+                <th>Job type</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -229,6 +283,10 @@ export default function JobsPage() {
                   <td>
                     {salesReps.find((rep) => rep.id === job.sales_rep_id)?.name ||
                       (job.sales_rep_id ? `Rep #${job.sales_rep_id}` : "Unassigned")}
+                  </td>
+                  <td>
+                    {jobTypes.find((type) => type.id === job.job_type_id)?.name ||
+                      (job.job_type_id ? `Type #${job.job_type_id}` : "-")}
                   </td>
                   <td>
                     <StatusChip status={job.status} />

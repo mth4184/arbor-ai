@@ -224,6 +224,7 @@ class JobBase(BaseModel):
     scheduled_end: Optional[datetime] = None
     crew_id: Optional[int] = None
     sales_rep_id: Optional[int] = None
+    job_type_id: Optional[int] = None
     total: float = 0.0
     notes: str = ""
 
@@ -241,6 +242,7 @@ class JobUpdate(BaseModel):
     scheduled_end: Optional[datetime] = None
     crew_id: Optional[int] = None
     sales_rep_id: Optional[int] = None
+    job_type_id: Optional[int] = None
     total: Optional[float] = None
     notes: Optional[str] = None
 
@@ -426,6 +428,26 @@ class SalesRepOut(SalesRepBase):
     id: int
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class JobTypeBase(BaseModel):
+    name: str
+
+
+class JobTypeCreate(JobTypeBase):
+    pass
+
+
+class JobTypeUpdate(BaseModel):
+    name: Optional[str] = None
+
+
+class JobTypeOut(JobTypeBase):
+    id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True

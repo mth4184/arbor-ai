@@ -186,6 +186,7 @@ def create_job(db: Session, payload, tasks, equipment_ids):
         scheduled_end=payload.scheduled_end,
         crew_id=payload.crew_id,
         sales_rep_id=payload.sales_rep_id,
+        job_type_id=payload.job_type_id,
         total=payload.total,
         notes=payload.notes,
     )
@@ -445,3 +446,23 @@ def update_sales_rep(db: Session, sales_rep: models.SalesRep, payload):
 
 def list_sales_reps(db: Session):
     return db.query(models.SalesRep).order_by(models.SalesRep.id.desc()).all()
+
+
+def create_job_type(db: Session, payload):
+    job_type = models.JobType(name=payload.name)
+    db.add(job_type)
+    db.commit()
+    db.refresh(job_type)
+    return job_type
+
+
+def update_job_type(db: Session, job_type: models.JobType, payload):
+    if payload.name is not None:
+        job_type.name = payload.name
+    db.commit()
+    db.refresh(job_type)
+    return job_type
+
+
+def list_job_types(db: Session):
+    return db.query(models.JobType).order_by(models.JobType.name.asc()).all()

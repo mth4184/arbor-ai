@@ -278,6 +278,8 @@ def create_job(payload: schemas.JobCreate, db: Session = Depends(get_db)):
         get_or_404(db, models.Crew, payload.crew_id, "Crew")
     if payload.sales_rep_id:
         get_or_404(db, models.SalesRep, payload.sales_rep_id, "Sales rep")
+    if payload.job_type_id:
+        get_or_404(db, models.JobType, payload.job_type_id, "Job type")
     validate_status(payload.status, {"scheduled", "in_progress", "completed", "canceled"}, "job")
     return crud.create_job(db, payload, payload.tasks, payload.equipment_ids)
 
@@ -318,6 +320,8 @@ def update_job(job_id: int, payload: schemas.JobUpdate, db: Session = Depends(ge
         validate_status(updates["status"], {"scheduled", "in_progress", "completed", "canceled"}, "job")
     if updates.get("sales_rep_id"):
         get_or_404(db, models.SalesRep, updates["sales_rep_id"], "Sales rep")
+    if updates.get("job_type_id"):
+        get_or_404(db, models.JobType, updates["job_type_id"], "Job type")
     return crud.update_job(db, job, **updates)
 
 
@@ -568,6 +572,39 @@ def update_sales_rep(sales_rep_id: int, payload: schemas.SalesRepUpdate, db: Ses
 def delete_sales_rep(sales_rep_id: int, db: Session = Depends(get_db)):
     sales_rep = get_or_404(db, models.SalesRep, sales_rep_id, "Sales rep")
     db.delete(sales_rep)
+    db.commit()
+    return {"ok": True}
+
+
+# Job types
+@app.post("/job-types", response_model=schemas.JobTypeOut)
+def create_job_type(payload: schemas.JobTypeCreate, db: Session = Depends(get_db)):
+    existing = db.query(models.JobType).filter(models.JobType.name == payload.name).first()
+    if existing:
+        return existing
+    return crud.create_job_type(db, payload)
+
+
+@app.get("/job-types", response_model=list[schemas.JobTypeOut])
+def list_job_types(db: Session = Depends(get_db)):
+    return crud.list_job_types(db)
+
+
+@app.get("/job-types/{job_type_id}", response_model=schemas.JobTypeOut)
+def get_job_type(job_type_id: int, db: Session = Depends(get_db)):
+    return get_or_404(db, models.JobType, job_type_id, "Job type")
+
+
+@app.put("/job-types/{job_type_id}", response_model=schemas.JobTypeOut)
+def update_job_type(job_type_id: int, payload: schemas.JobTypeUpdate, db: Session = Depends(get_db)):
+    job_type = get_or_404(db, models.JobType, job_type_id, "Job type")
+    return crud.update_job_type(db, job_type, payload)
+
+
+@app.delete("/job-types/{job_type_id}")
+def delete_job_type(job_type_id: int, db: Session = Depends(get_db)):
+    job_type = get_or_404(db, models.JobType, job_type_id, "Job type")
+    db.delete(job_type)
     db.commit()
     return {"ok": True}
 

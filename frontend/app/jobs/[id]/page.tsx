@@ -16,6 +16,8 @@ export default function JobDetailPage() {
   const [equipment, setEquipment] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
   const [salesReps, setSalesReps] = useState<any[]>([]);
+  const [jobTypes, setJobTypes] = useState<any[]>([]);
+  const [newJobType, setNewJobType] = useState("");
   const [newTask, setNewTask] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [attachmentCaption, setAttachmentCaption] = useState("");
@@ -24,12 +26,13 @@ export default function JobDetailPage() {
   const [invoiceResult, setInvoiceResult] = useState<any | null>(null);
 
   async function load() {
-    const [jobItem, files, equipmentItems, crewItems, salesRepItems] = await Promise.all([
+    const [jobItem, files, equipmentItems, crewItems, salesRepItems, jobTypeItems] = await Promise.all([
       apiGet(`/jobs/${id}`),
       apiGet("/attachments", { entity_type: "job", entity_id: id }),
       apiGet("/equipment"),
       apiGet("/crews"),
       apiGet("/sales-reps"),
+      apiGet("/job-types"),
     ]);
     setJob(jobItem);
     setTasks(jobItem.tasks || []);
@@ -37,6 +40,7 @@ export default function JobDetailPage() {
     setEquipment(equipmentItems || []);
     setCrews(crewItems || []);
     setSalesReps(salesRepItems || []);
+    setJobTypes(jobTypeItems || []);
   }
 
   useEffect(() => {
@@ -47,6 +51,14 @@ export default function JobDetailPage() {
     if (!job) return;
     const updated = await apiPut(`/jobs/${id}`, job);
     setJob(updated);
+  }
+
+  async function addJobType() {
+    if (!newJobType.trim()) return;
+    const created = await apiPost("/job-types", { name: newJobType.trim() });
+    setJobTypes([created, ...jobTypes]);
+    setJob({ ...job, job_type_id: created.id });
+    setNewJobType("");
   }
 
   async function addTask() {
@@ -168,6 +180,43 @@ export default function JobDetailPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="field">
+              <label className="label">Job type</label>
+              <select
+                className="select"
+                value={job.job_type_id ?? (newJobType ? "__new__" : "")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "__new__") {
+                    setJob({ ...job, job_type_id: null });
+                  } else {
+                    setJob({ ...job, job_type_id: value ? Number(value) : null });
+                    setNewJobType("");
+                  }
+                }}
+              >
+                <option value="">Select type</option>
+                {jobTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+                <option value="__new__">Add new...</option>
+              </select>
+              {(job.job_type_id === null || newJobType) && (
+                <div className="form-actions section">
+                  <input
+                    className="input"
+                    placeholder="New job type"
+                    value={newJobType}
+                    onChange={(e) => setNewJobType(e.target.value)}
+                  />
+                  <button className="btn btn-secondary" onClick={addJobType}>
+                    Add
+                  </button>
+                </div>
+              )}
             </div>
             <div className="field">
               <label className="label">Status</label>
