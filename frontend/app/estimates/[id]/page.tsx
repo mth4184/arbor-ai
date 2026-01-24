@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { apiGet, apiPost, apiPut } from "../../api";
 import StatusChip from "../../components/StatusChip";
 import NumberInput from "../../components/NumberInput";
+import SaveButton from "../../components/SaveButton";
 
 type LineItem = {
   name: string;
@@ -138,9 +139,7 @@ export default function EstimateDetailPage() {
           <button className="btn btn-secondary" onClick={() => updateStatus("rejected")}>
             Reject
           </button>
-          <button className="btn btn-primary" onClick={save}>
-            Save Changes
-          </button>
+          <SaveButton className="btn btn-primary" onSave={save} />
         </div>
       </header>
 

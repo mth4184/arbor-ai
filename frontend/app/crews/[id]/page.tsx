@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet, apiPut } from "../../api";
+import SaveButton from "../../components/SaveButton";
 
 export default function CrewDetailPage() {
   const params = useParams();
@@ -60,9 +61,7 @@ export default function CrewDetailPage() {
           <h2 className="page-title">{crew.name}</h2>
           <p className="page-subtitle">Manage crew members and schedules.</p>
         </div>
-        <button className="btn btn-primary" onClick={save}>
-          Save Changes
-        </button>
+        <SaveButton className="btn btn-primary" onSave={save} />
       </header>
 
       <div className="page-grid">

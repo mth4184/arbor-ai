@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet, apiPost, apiPut } from "../../api";
+import SaveButton from "../../components/SaveButton";
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -73,9 +74,7 @@ export default function CustomerDetailPage() {
           <h2 className="page-title">{customer.name}</h2>
           <p className="page-subtitle">Maintain notes, addresses, and customer history.</p>
         </div>
-        <button className="btn btn-primary" onClick={save}>
-          Save Changes
-        </button>
+        <SaveButton className="btn btn-primary" onSave={save} />
       </header>
 
       <div className="page-grid">

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet, apiPost, apiPut } from "../../api";
 import StatusChip from "../../components/StatusChip";
+import SaveButton from "../../components/SaveButton";
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -65,9 +66,7 @@ export default function LeadDetailPage() {
           <h2 className="page-title">Lead #{lead.id}</h2>
           <p className="page-subtitle">Update status, notes, and attachments.</p>
         </div>
-        <button className="btn btn-primary" onClick={save}>
-          Save Changes
-        </button>
+        <SaveButton className="btn btn-primary" onSave={save} />
       </header>
 
       <div className="page-grid">

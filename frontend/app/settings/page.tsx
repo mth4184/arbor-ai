@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost, apiPut } from "../api";
 import NumberInput from "../components/NumberInput";
+import SaveButton from "../components/SaveButton";
 
 const emptyUser = {
   name: "",
@@ -69,9 +70,7 @@ export default function SettingsPage() {
           <h2 className="page-title">Company settings</h2>
           <p className="page-subtitle">Configure defaults and manage users.</p>
         </div>
-        <button className="btn btn-primary" onClick={saveSettings}>
-          Save Settings
-        </button>
+        <SaveButton className="btn btn-primary" onSave={saveSettings} defaultLabel="Save Settings" />
       </header>
 
       <div className="page-grid">

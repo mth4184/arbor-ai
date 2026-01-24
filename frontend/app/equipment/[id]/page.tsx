@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiGet, apiPost, apiPut } from "../../api";
 import StatusChip from "../../components/StatusChip";
+import SaveButton from "../../components/SaveButton";
 
 export default function EquipmentDetailPage() {
   const params = useParams();
@@ -61,9 +62,7 @@ export default function EquipmentDetailPage() {
           <h2 className="page-title">{equipment.name}</h2>
           <p className="page-subtitle">Track usage, maintenance, and notes.</p>
         </div>
-        <button className="btn btn-primary" onClick={save}>
-          Save Changes
-        </button>
+        <SaveButton className="btn btn-primary" onSave={save} />
       </header>
 
       <div className="page-grid">

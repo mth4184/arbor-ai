@@ -6,6 +6,7 @@ import Link from "next/link";
 import { apiDelete, apiGet, apiPost, apiPut } from "../../api";
 import StatusChip from "../../components/StatusChip";
 import NumberInput from "../../components/NumberInput";
+import SaveButton from "../../components/SaveButton";
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -25,7 +26,6 @@ export default function JobDetailPage() {
   const [equipmentId, setEquipmentId] = useState("");
   const [invoiceTaxRate, setInvoiceTaxRate] = useState(0);
   const [invoiceResult, setInvoiceResult] = useState<any | null>(null);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [completeStatus, setCompleteStatus] = useState<"idle" | "saving" | "error">("idle");
 
   async function load() {
@@ -52,15 +52,8 @@ export default function JobDetailPage() {
 
   async function saveJob() {
     if (!job) return;
-    setSaveStatus("saving");
-    try {
-      const updated = await apiPut(`/jobs/${id}`, job);
-      setJob(updated);
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 1500);
-    } catch (error) {
-      setSaveStatus("error");
-    }
+    const updated = await apiPut(`/jobs/${id}`, job);
+    setJob(updated);
   }
 
   async function addJobType() {
@@ -146,9 +139,7 @@ export default function JobDetailPage() {
           <p className="page-subtitle">Manage crew, schedule, and tasks.</p>
         </div>
         <div className="table-actions">
-          <button className="btn btn-secondary" onClick={saveJob} disabled={saveStatus === "saving"}>
-            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save Changes"}
-          </button>
+          <SaveButton className="btn btn-secondary" onSave={saveJob} />
           <button
             className="btn btn-primary"
             onClick={completeJob}
