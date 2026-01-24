@@ -53,6 +53,8 @@ export default function InvoicesPage() {
     const job = jobs.find((j) => j.id === Number(jobId));
     if (!job) return;
     const taxAmount = Number(((subtotal * taxRate) / 100).toFixed(2));
+    const now = new Date();
+    const time = now.toISOString().slice(11, 19);
     await apiPost("/invoices", {
       customer_id: Number(customerId),
       job_id: Number(jobId),
@@ -60,7 +62,7 @@ export default function InvoicesPage() {
       tax: taxAmount,
       total: subtotal + taxAmount,
       status: "unpaid",
-      issued_at: invoiceDate ? `${invoiceDate}T00:00:00` : null,
+      issued_at: invoiceDate ? `${invoiceDate}T${time}` : null,
       due_date: dueDate ? `${dueDate}T00:00:00` : null,
     });
     setSubtotal(0);

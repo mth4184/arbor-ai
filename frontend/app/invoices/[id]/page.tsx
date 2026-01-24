@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiGet, apiPost, apiPut } from "../../api";
 import StatusChip from "../../components/StatusChip";
@@ -11,6 +11,11 @@ export default function InvoiceDetailPage() {
   const id = params?.id as string;
   const [invoice, setInvoice] = useState<any | null>(null);
   const [customerName, setCustomerName] = useState<string>("");
+  const [customer, setCustomer] = useState<any | null>(null);
+  const [settings, setSettings] = useState<any | null>(null);
+  const [job, setJob] = useState<any | null>(null);
+  const [estimate, setEstimate] = useState<any | null>(null);
+  const [lineItems, setLineItems] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [taxRate, setTaxRate] = useState(0);
   const [dueDate, setDueDate] = useState("");
@@ -20,11 +25,25 @@ export default function InvoiceDetailPage() {
   const [paymentNote, setPaymentNote] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [attachmentCaption, setAttachmentCaption] = useState("");
+  const pdfRef = useRef<HTMLDivElement | null>(null);
+
+  const paidTotal = invoice?.payments?.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
+  const balanceDue = Math.max((invoice?.total || 0) - paidTotal, 0);
+
+  function formatDate(value?: string) {
+    if (!value) return "-";
+    return value.slice(0, 10);
+  }
+
+  function formatCurrency(value: number) {
+    return value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  }
 
   async function load() {
-    const [inv, files] = await Promise.all([
+    const [inv, files, settingsData] = await Promise.all([
       apiGet(`/invoices/${id}`),
       apiGet("/attachments", { entity_type: "invoice", entity_id: id }),
+      apiGet("/settings"),
     ]);
     setInvoice(inv);
     const rate = inv.subtotal ? (inv.tax / inv.subtotal) * 100 : 0;
@@ -32,9 +51,23 @@ export default function InvoiceDetailPage() {
     setInvoiceDate(inv.issued_at ? String(inv.issued_at).slice(0, 10) : "");
     setDueDate(inv.due_date ? String(inv.due_date).slice(0, 10) : "");
     setAttachments(files || []);
+    setSettings(settingsData);
     if (inv?.customer_id) {
-      const customer = await apiGet(`/customers/${inv.customer_id}`);
-      setCustomerName(customer?.name || "");
+      const customerData = await apiGet(`/customers/${inv.customer_id}`);
+      setCustomerName(customerData?.name || "");
+      setCustomer(customerData);
+    }
+    if (inv?.job_id) {
+      const jobData = await apiGet(`/jobs/${inv.job_id}`);
+      setJob(jobData);
+      if (jobData?.estimate_id) {
+        const estimateData = await apiGet(`/estimates/${jobData.estimate_id}`);
+        setEstimate(estimateData);
+        setLineItems(estimateData?.line_items || []);
+      } else {
+        setEstimate(null);
+        setLineItems([]);
+      }
     }
   }
 
@@ -78,6 +111,25 @@ export default function InvoiceDetailPage() {
     await load();
   }
 
+  async function downloadPdf() {
+    if (!pdfRef.current || !invoice) return;
+    const module = await import("html2pdf.js");
+    const html2pdf = module.default || module;
+    const filename = customerName
+      ? `${customerName.replace(/\\s+/g, "-").toLowerCase()}-invoice-${invoice.id}.pdf`
+      : `invoice-${invoice.id}.pdf`;
+    html2pdf()
+      .set({
+        margin: [10, 10, 10, 10],
+        filename,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .from(pdfRef.current)
+      .save();
+  }
+
   if (!invoice) {
     return (
       <main className="page">
@@ -96,9 +148,14 @@ export default function InvoiceDetailPage() {
           </h2>
           <p className="page-subtitle">Track payments and balances.</p>
         </div>
-        <button className="btn btn-primary" onClick={save}>
-          Save Changes
-        </button>
+        <div className="table-actions">
+          <button className="btn btn-secondary" onClick={downloadPdf}>
+            Download PDF
+          </button>
+          <button className="btn btn-primary" onClick={save}>
+            Save Changes
+          </button>
+        </div>
       </header>
 
       <div className="page-grid">
@@ -278,6 +335,101 @@ export default function InvoiceDetailPage() {
           ))}
         </ul>
       </section>
+
+      <div className="pdf-capture" ref={pdfRef}>
+        <div className="pdf-header">
+          <div className="pdf-brand">
+            {settings?.company_logo_url ? (
+              <img
+                className="pdf-logo"
+                src={settings.company_logo_url}
+                alt={settings.company_name || "Company logo"}
+              />
+            ) : (
+              <div className="pdf-logo-placeholder" />
+            )}
+            <div>
+              <div className="pdf-company-name">{settings?.company_name || "Tree Service"}</div>
+              <div className="pdf-company-subtitle">Professional tree care</div>
+            </div>
+          </div>
+          <div className="pdf-title">
+            <div>Invoice</div>
+            <div className="pdf-meta">#{invoice.id}</div>
+            <div className="pdf-meta">Date: {formatDate(invoiceDate)}</div>
+            <div className="pdf-meta">Due: {formatDate(dueDate)}</div>
+          </div>
+        </div>
+
+        <div className="pdf-section">
+          <div className="pdf-grid">
+            <div>
+              <div className="pdf-label">Bill to</div>
+              <div className="pdf-strong">{customerName || "Customer"}</div>
+              <div className="pdf-muted">{customer?.billing_address || customer?.service_address || ""}</div>
+              <div className="pdf-muted">{customer?.email || ""}</div>
+            </div>
+            <div>
+              <div className="pdf-label">Job</div>
+              <div className="pdf-strong">Job #{invoice.job_id}</div>
+              <div className="pdf-muted">{job?.scheduled_start ? formatDate(job.scheduled_start) : ""}</div>
+            </div>
+          </div>
+        </div>
+
+        <table className="pdf-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Unit price</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(lineItems.length ? lineItems : [{ name: "Service", qty: 1, unit_price: invoice.subtotal, total: invoice.subtotal }]).map(
+              (item: any, idx: number) => (
+                <tr key={`${item.name}-${idx}`}>
+                  <td>
+                    <div className="pdf-strong">{item.name}</div>
+                    {item.description ? <div className="pdf-muted">{item.description}</div> : null}
+                  </td>
+                  <td>{item.qty}</td>
+                  <td>{formatCurrency(item.unit_price || 0)}</td>
+                  <td>{formatCurrency(item.total ?? item.qty * item.unit_price)}</td>
+                </tr>
+              ),
+            )}
+          </tbody>
+        </table>
+
+        <div className="pdf-summary">
+          <div className="pdf-summary-row">
+            <span>Subtotal</span>
+            <span>{formatCurrency(invoice.subtotal || 0)}</span>
+          </div>
+          <div className="pdf-summary-row">
+            <span>Tax</span>
+            <span>{formatCurrency(invoice.tax || 0)}</span>
+          </div>
+          <div className="pdf-summary-row pdf-total">
+            <span>Total</span>
+            <span>{formatCurrency(invoice.total || 0)}</span>
+          </div>
+          <div className="pdf-summary-row">
+            <span>Paid</span>
+            <span>{formatCurrency(paidTotal)}</span>
+          </div>
+          <div className="pdf-balance">Balance due {formatCurrency(balanceDue)}</div>
+        </div>
+
+        {invoice.notes ? (
+          <div className="pdf-notes">
+            <div className="pdf-label">Notes</div>
+            <div className="pdf-muted">{invoice.notes}</div>
+          </div>
+        ) : null}
+      </div>
     </main>
   );
 }

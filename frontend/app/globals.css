@@ -538,6 +538,150 @@ textarea {
   padding-right: 28px;
 }
 
+.pdf-capture {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 794px;
+  padding: 32px;
+  background: #fff;
+  color: #18241c;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+.pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: #1c60c5;
+  color: #fff;
+  border-radius: 8px;
+}
+
+.pdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdf-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.pdf-logo-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.pdf-company-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.pdf-company-subtitle {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.pdf-title {
+  text-align: right;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.pdf-meta {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.pdf-section {
+  margin: 20px 0;
+}
+
+.pdf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.pdf-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #6a7c6b;
+}
+
+.pdf-strong {
+  font-weight: 700;
+  color: #1c3c2a;
+}
+
+.pdf-muted {
+  font-size: 12px;
+  color: #5a6b60;
+}
+
+.pdf-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.pdf-table th,
+.pdf-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e4e9e3;
+  font-size: 12px;
+}
+
+.pdf-table th {
+  background: #f4f6f2;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-size: 11px;
+}
+
+.pdf-summary {
+  margin-top: 16px;
+  max-width: 260px;
+  margin-left: auto;
+}
+
+.pdf-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.pdf-total {
+  font-weight: 700;
+}
+
+.pdf-balance {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #1c3c2a;
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+.pdf-notes {
+  margin-top: 16px;
+}
+
 .textarea {
   min-height: 100px;
   resize: vertical;
