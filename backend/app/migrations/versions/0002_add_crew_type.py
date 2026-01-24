@@ -14,13 +14,16 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column(
-        "crews",
-        sa.Column("type", sa.String(length=20), nullable=False, server_default="GTC"),
-    )
     bind = op.get_bind()
-    if bind.dialect.name != "sqlite":
-        op.alter_column("crews", "type", server_default=None)
+    inspector = sa.inspect(bind)
+    columns = [col["name"] for col in inspector.get_columns("crews")]
+    if "type" not in columns:
+        op.add_column(
+            "crews",
+            sa.Column("type", sa.String(length=20), nullable=False, server_default="GTC"),
+        )
+        if bind.dialect.name != "sqlite":
+            op.alter_column("crews", "type", server_default=None)
 
 
 def downgrade():
