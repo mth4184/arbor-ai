@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { apiGet, apiPost } from "../api";
+import { apiGet, apiPost, apiPut } from "../api";
 import StatusChip from "../components/StatusChip";
 import NumberInput from "../components/NumberInput";
 
@@ -296,7 +296,24 @@ export default function JobsPage() {
               {jobs.map((job) => (
                 <tr key={job.id}>
                   <td>Job #{job.id}</td>
-                  <td>Customer #{job.customer_id}</td>
+                  <td>
+                    <select
+                      className="select"
+                      value={job.customer_id ?? ""}
+                      onChange={async (e) => {
+                        const value = e.target.value;
+                        if (!value) return;
+                        await apiPut(`/jobs/${job.id}`, { customer_id: Number(value) });
+                        await refresh();
+                      }}
+                    >
+                      {customers.map((customer) => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td>{job.crew_id ? `Crew #${job.crew_id}` : "Unassigned"}</td>
                   <td>
                     {salesReps.find((rep) => rep.id === job.sales_rep_id)?.name ||
