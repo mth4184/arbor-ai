@@ -13,6 +13,8 @@ export default function InvoicesPage() {
   const [jobId, setJobId] = useState<string>("");
   const [subtotal, setSubtotal] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
+  const [sentDate, setSentDate] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
 
@@ -28,6 +30,12 @@ export default function InvoicesPage() {
     if (!customerId && customerItems.length) setCustomerId(String(customerItems[0].id));
   }
   useEffect(() => { refresh(); }, [statusFilter, search]);
+  useEffect(() => {
+    if (!sentDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      setSentDate(today);
+    }
+  }, [sentDate]);
   useEffect(() => {
     const filteredJobs = jobs.filter((job) => String(job.customer_id) === customerId);
     if (!jobId && filteredJobs.length) {
@@ -52,9 +60,12 @@ export default function InvoicesPage() {
       tax: taxAmount,
       total: subtotal + taxAmount,
       status: "unpaid",
+      sent_at: sentDate ? `${sentDate}T00:00:00` : null,
+      due_date: dueDate ? `${dueDate}T00:00:00` : null,
     });
     setSubtotal(0);
     setTaxRate(0);
+    setDueDate("");
     await refresh();
   }
 
@@ -132,6 +143,26 @@ export default function InvoicesPage() {
               value={taxRate}
               onValueChange={setTaxRate}
               suffix="%"
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="invoice-sent">Date sent</label>
+            <input
+              id="invoice-sent"
+              className="input"
+              type="date"
+              value={sentDate}
+              onChange={(e) => setSentDate(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="invoice-due">Due date</label>
+            <input
+              id="invoice-due"
+              className="input"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
           <div className="form-actions">

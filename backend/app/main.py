@@ -374,6 +374,8 @@ def create_invoice(payload: schemas.InvoiceCreate, db: Session = Depends(get_db)
     validate_status(payload.status, {"unpaid", "partial", "paid"}, "invoice")
     subtotal = payload.subtotal or job.total
     total = payload.total or max(subtotal + payload.tax, 0.0)
+    if payload.sent_at is None:
+        payload = payload.model_copy(update={"sent_at": datetime.utcnow()})
     payload = payload.model_copy(update={"subtotal": subtotal, "total": total})
     return crud.create_invoice(db, payload)
 

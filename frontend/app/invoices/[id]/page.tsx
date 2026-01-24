@@ -13,6 +13,8 @@ export default function InvoiceDetailPage() {
   const [customerName, setCustomerName] = useState<string>("");
   const [attachments, setAttachments] = useState<any[]>([]);
   const [taxRate, setTaxRate] = useState(0);
+  const [sentDate, setSentDate] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [paymentNote, setPaymentNote] = useState("");
@@ -27,6 +29,8 @@ export default function InvoiceDetailPage() {
     setInvoice(inv);
     const rate = inv.subtotal ? (inv.tax / inv.subtotal) * 100 : 0;
     setTaxRate(Number(rate.toFixed(2)));
+    setSentDate(inv.sent_at ? String(inv.sent_at).slice(0, 10) : "");
+    setDueDate(inv.due_date ? String(inv.due_date).slice(0, 10) : "");
     setAttachments(files || []);
     if (inv?.customer_id) {
       const customer = await apiGet(`/customers/${inv.customer_id}`);
@@ -40,7 +44,11 @@ export default function InvoiceDetailPage() {
 
   async function save() {
     if (!invoice) return;
-    const updated = await apiPut(`/invoices/${id}`, invoice);
+    const updated = await apiPut(`/invoices/${id}`, {
+      ...invoice,
+      sent_at: sentDate ? `${sentDate}T00:00:00` : null,
+      due_date: dueDate ? `${dueDate}T00:00:00` : null,
+    });
     setInvoice(updated);
   }
 
@@ -145,11 +153,21 @@ export default function InvoiceDetailPage() {
               <input className="input" type="number" value={invoice.total} disabled />
             </div>
             <div className="field">
+              <label className="label">Date sent</label>
+              <input
+                className="input"
+                type="date"
+                value={sentDate}
+                onChange={(e) => setSentDate(e.target.value)}
+              />
+            </div>
+            <div className="field">
               <label className="label">Due date</label>
               <input
                 className="input"
-                value={invoice.due_date ?? ""}
-                onChange={(e) => setInvoice({ ...invoice, due_date: e.target.value })}
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
             <div className="field field-full">

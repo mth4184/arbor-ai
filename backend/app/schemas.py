@@ -265,6 +265,7 @@ class InvoiceBase(BaseModel):
     subtotal: float = 0.0
     tax: float = 0.0
     total: float = 0.0
+    sent_at: Optional[datetime] = None
     due_date: Optional[datetime] = None
     notes: str = ""
 
@@ -278,6 +279,7 @@ class InvoiceUpdate(BaseModel):
     subtotal: Optional[float] = None
     tax: Optional[float] = None
     total: Optional[float] = None
+    sent_at: Optional[datetime] = None
     due_date: Optional[datetime] = None
     notes: Optional[str] = None
 

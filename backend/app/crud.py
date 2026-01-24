@@ -253,6 +253,7 @@ def create_invoice(db: Session, payload):
         subtotal=payload.subtotal,
         tax=payload.tax,
         total=payload.total,
+        sent_at=payload.sent_at,
         due_date=payload.due_date,
         notes=payload.notes,
     )
