@@ -1,7 +1,8 @@
 import os, json
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+API_KEY = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=API_KEY) if API_KEY else None
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 
 def suggest_estimate(payload: dict, historical_jobs: list[dict]) -> dict:
@@ -28,11 +29,16 @@ def suggest_estimate(payload: dict, historical_jobs: list[dict]) -> dict:
         ),
     }
 
-    resp = client.responses.create(
-        model=MODEL,
-        input=[prompt, user],
-    )
+    if not client:
+        return {
+            "suggested_price": 0,
+            "scope": "",
+            "hazards": "",
+            "equipment": "",
+            "rationale": "OpenAI API key not configured.",
+        }
 
+    resp = client.responses.create(model=MODEL, input=[prompt, user])
     text = getattr(resp, "output_text", "") or ""
     # naive JSON parse fallback
     try:
@@ -55,6 +61,15 @@ def structure_notes(raw_notes: str) -> dict:
         ),
     }
     user = {"role": "user", "content": raw_notes}
+    if not client:
+        return {
+            "scope": "",
+            "hazards": "",
+            "equipment": "",
+            "questions_to_confirm": [],
+            "raw": "OpenAI API key not configured.",
+        }
+
     resp = client.responses.create(model=MODEL, input=[prompt, user])
     text = getattr(resp, "output_text", "") or ""
     try:
@@ -78,6 +93,9 @@ def suggest_schedule(estimate: dict, preferred_window: str, crew_options: list[s
             "crew_options": crew_options,
         }, indent=2),
     }
+    if not client:
+        return {"suggested_date": "", "suggested_crew": "", "reasoning": "OpenAI API key not configured."}
+
     resp = client.responses.create(model=MODEL, input=[prompt, user])
     text = getattr(resp, "output_text", "") or ""
     try:
