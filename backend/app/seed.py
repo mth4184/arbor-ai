@@ -217,7 +217,6 @@ def seed_db():
             tax=tax,
             total=total,
             issued_at=datetime.utcnow() - timedelta(days=random.randint(1, 7)),
-            sent_at=datetime.utcnow() - timedelta(days=random.randint(1, 5)),
             due_date=datetime.utcnow() + timedelta(days=30),
             notes="Net 30",
         )

@@ -13,7 +13,6 @@ export default function InvoicesPage() {
   const [jobId, setJobId] = useState<string>("");
   const [subtotal, setSubtotal] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
-  const [sentDate, setSentDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -31,12 +30,6 @@ export default function InvoicesPage() {
     if (!customerId && customerItems.length) setCustomerId(String(customerItems[0].id));
   }
   useEffect(() => { refresh(); }, [statusFilter, search]);
-  useEffect(() => {
-    if (!sentDate) {
-      const today = new Date().toISOString().slice(0, 10);
-      setSentDate(today);
-    }
-  }, [sentDate]);
   useEffect(() => {
     if (!invoiceDate) {
       const today = new Date().toISOString().slice(0, 10);
@@ -68,7 +61,6 @@ export default function InvoicesPage() {
       total: subtotal + taxAmount,
       status: "unpaid",
       issued_at: invoiceDate ? `${invoiceDate}T00:00:00` : null,
-      sent_at: sentDate ? `${sentDate}T00:00:00` : null,
       due_date: dueDate ? `${dueDate}T00:00:00` : null,
     });
     setSubtotal(0);
@@ -161,16 +153,6 @@ export default function InvoicesPage() {
               type="date"
               value={invoiceDate}
               onChange={(e) => setInvoiceDate(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="invoice-sent">Date sent</label>
-            <input
-              id="invoice-sent"
-              className="input"
-              type="date"
-              value={sentDate}
-              onChange={(e) => setSentDate(e.target.value)}
             />
           </div>
           <div className="field">

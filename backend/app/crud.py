@@ -254,7 +254,6 @@ def create_invoice(db: Session, payload):
         tax=payload.tax,
         total=payload.total,
         issued_at=payload.issued_at,
-        sent_at=payload.sent_at,
         due_date=payload.due_date,
         notes=payload.notes,
     )

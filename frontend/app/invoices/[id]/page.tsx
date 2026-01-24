@@ -13,7 +13,6 @@ export default function InvoiceDetailPage() {
   const [customerName, setCustomerName] = useState<string>("");
   const [attachments, setAttachments] = useState<any[]>([]);
   const [taxRate, setTaxRate] = useState(0);
-  const [sentDate, setSentDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
   const [paymentAmount, setPaymentAmount] = useState(0);
@@ -31,7 +30,6 @@ export default function InvoiceDetailPage() {
     const rate = inv.subtotal ? (inv.tax / inv.subtotal) * 100 : 0;
     setTaxRate(Number(rate.toFixed(2)));
     setInvoiceDate(inv.issued_at ? String(inv.issued_at).slice(0, 10) : "");
-    setSentDate(inv.sent_at ? String(inv.sent_at).slice(0, 10) : "");
     setDueDate(inv.due_date ? String(inv.due_date).slice(0, 10) : "");
     setAttachments(files || []);
     if (inv?.customer_id) {
@@ -49,7 +47,6 @@ export default function InvoiceDetailPage() {
     const updated = await apiPut(`/invoices/${id}`, {
       ...invoice,
       issued_at: invoiceDate ? `${invoiceDate}T00:00:00` : null,
-      sent_at: sentDate ? `${sentDate}T00:00:00` : null,
       due_date: dueDate ? `${dueDate}T00:00:00` : null,
     });
     setInvoice(updated);
@@ -162,15 +159,6 @@ export default function InvoiceDetailPage() {
                 type="date"
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
-              />
-            </div>
-            <div className="field">
-              <label className="label">Date sent</label>
-              <input
-                className="input"
-                type="date"
-                value={sentDate}
-                onChange={(e) => setSentDate(e.target.value)}
               />
             </div>
             <div className="field">
