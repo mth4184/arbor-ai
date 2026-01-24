@@ -1,19 +1,42 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { apiGet, apiPost } from "../api";
+import StatusChip from "../components/StatusChip";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", notes: "" });
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [form, setForm] = useState({
+    customer_id: "",
+    source: "",
+    status: "new",
+    notes: "",
+  });
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   async function refresh() {
-    setLeads(await apiGet("/leads"));
+    const [leadItems, customerItems] = await Promise.all([
+      apiGet("/leads", { q: search, status: statusFilter || undefined }),
+      apiGet("/customers"),
+    ]);
+    setLeads(leadItems);
+    setCustomers(customerItems);
+    if (!form.customer_id && customerItems.length) {
+      setForm({ ...form, customer_id: String(customerItems[0].id) });
+    }
   }
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh(); }, [search, statusFilter]);
 
   async function submit() {
-    await apiPost("/leads", form);
-    setForm({ name: "", phone: "", address: "", notes: "" });
+    await apiPost("/leads", {
+      customer_id: Number(form.customer_id),
+      source: form.source,
+      status: form.status,
+      notes: form.notes,
+    });
+    setForm({ customer_id: form.customer_id, source: "", status: "new", notes: "" });
     await refresh();
   }
 
@@ -43,34 +66,43 @@ export default function LeadsPage() {
         </div>
         <div className="form-grid">
           <div className="field">
-            <label className="label" htmlFor="lead-name">Full name</label>
+            <label className="label" htmlFor="lead-customer">Customer</label>
+            <select
+              id="lead-customer"
+              className="select"
+              value={form.customer_id}
+              onChange={e=>setForm({ ...form, customer_id: e.target.value })}
+            >
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="lead-source">Source</label>
             <input
-              id="lead-name"
+              id="lead-source"
               className="input"
-              placeholder="Name"
-              value={form.name}
-              onChange={e=>setForm({ ...form, name: e.target.value })}
+              placeholder="Website, referral, storm"
+              value={form.source}
+              onChange={e=>setForm({ ...form, source: e.target.value })}
             />
           </div>
           <div className="field">
-            <label className="label" htmlFor="lead-phone">Phone</label>
-            <input
-              id="lead-phone"
-              className="input"
-              placeholder="Phone"
-              value={form.phone}
-              onChange={e=>setForm({ ...form, phone: e.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label className="label" htmlFor="lead-address">Address</label>
-            <input
-              id="lead-address"
-              className="input"
-              placeholder="Address"
-              value={form.address}
-              onChange={e=>setForm({ ...form, address: e.target.value })}
-            />
+            <label className="label" htmlFor="lead-status">Status</label>
+            <select
+              id="lead-status"
+              className="select"
+              value={form.status}
+              onChange={e=>setForm({ ...form, status: e.target.value })}
+            >
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="qualified">Qualified</option>
+              <option value="lost">Lost</option>
+            </select>
           </div>
           <div className="field field-full">
             <label className="label" htmlFor="lead-notes">Notes</label>
@@ -98,6 +130,21 @@ export default function LeadsPage() {
           </div>
           <span className="badge">{leads.length} active</span>
         </div>
+        <div className="filters section">
+          <input
+            className="input"
+            placeholder="Search customers..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="qualified">Qualified</option>
+            <option value="lost">Lost</option>
+          </select>
+        </div>
         {leads.length === 0 ? (
           <p className="card-subtitle">No leads yet. Add one above to get started.</p>
         ) : (
@@ -105,10 +152,15 @@ export default function LeadsPage() {
             {leads.map(l => (
               <li className="list-item" key={l.id}>
                 <div>
-                  <div className="list-title">{l.name}</div>
-                  <div className="list-meta">{l.phone} · {l.address}</div>
+                  <div className="list-title">Lead #{l.id}</div>
+                  <div className="list-meta">Customer #{l.customer_id} · {l.source || "Inbound"}</div>
                 </div>
-                <span className="list-status">New</span>
+                <div className="table-actions">
+                  <StatusChip status={l.status} />
+                  <Link className="btn btn-secondary" href={`/leads/${l.id}`}>
+                    View
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

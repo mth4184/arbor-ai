@@ -196,6 +196,10 @@ def convert_estimate_to_job(
     db: Session = Depends(get_db),
 ):
     estimate = get_or_404(db, models.Estimate, estimate_id, "Estimate")
+    if estimate.status != "approved":
+        estimate.status = "approved"
+        if not estimate.approved_at:
+            estimate.approved_at = datetime.utcnow()
     validate_status(payload.status, {"scheduled", "in_progress", "completed", "canceled"}, "job")
     job_payload = schemas.JobCreate(
         customer_id=estimate.customer_id,
@@ -379,9 +383,10 @@ def list_invoices(
     q: str | None = None,
     status_filter: str | None = Query(None, alias="status"),
     customer_id: int | None = None,
+    job_id: int | None = None,
     db: Session = Depends(get_db),
 ):
-    return crud.list_invoices(db, q=q, status=status_filter, customer_id=customer_id)
+    return crud.list_invoices(db, q=q, status=status_filter, customer_id=customer_id, job_id=job_id)
 
 
 @app.get("/invoices/{invoice_id}", response_model=schemas.InvoiceOut)

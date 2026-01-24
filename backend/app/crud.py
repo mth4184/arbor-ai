@@ -271,12 +271,20 @@ def update_invoice(db: Session, invoice: models.Invoice, **updates):
     return invoice
 
 
-def list_invoices(db: Session, q: str | None = None, status: str | None = None, customer_id: int | None = None):
+def list_invoices(
+    db: Session,
+    q: str | None = None,
+    status: str | None = None,
+    customer_id: int | None = None,
+    job_id: int | None = None,
+):
     query = db.query(models.Invoice)
     if status:
         query = query.filter(models.Invoice.status == status)
     if customer_id:
         query = query.filter(models.Invoice.customer_id == customer_id)
+    if job_id:
+        query = query.filter(models.Invoice.job_id == job_id)
     if q:
         like = f"%{q.lower()}%"
         query = query.join(models.Customer).filter(

@@ -1,93 +1,186 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { apiGet } from "./api";
+import StatusChip from "./components/StatusChip";
+
 export default function Home() {
+  const [stats, setStats] = useState<any>(null);
+  const [todaysJobs, setTodaysJobs] = useState<any[]>([]);
+  const [upcomingJobs, setUpcomingJobs] = useState<any[]>([]);
+  const [openEstimates, setOpenEstimates] = useState<any[]>([]);
+  const [unpaidInvoices, setUnpaidInvoices] = useState<any[]>([]);
+
+  useEffect(() => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const isoToday = today.toISOString();
+    const isoTomorrow = tomorrow.toISOString();
+
+    async function load() {
+      const [dashboard, todayJobs, upcoming, draftEstimates, sentEstimates, unpaid, partial] =
+        await Promise.all([
+          apiGet("/dashboard"),
+          apiGet("/jobs", { start: isoToday, end: isoTomorrow }),
+          apiGet("/jobs", { start: isoTomorrow }),
+          apiGet("/estimates", { status: "draft" }),
+          apiGet("/estimates", { status: "sent" }),
+          apiGet("/invoices", { status: "unpaid" }),
+          apiGet("/invoices", { status: "partial" }),
+        ]);
+      setStats(dashboard);
+      setTodaysJobs(todayJobs);
+      setUpcomingJobs(upcoming);
+      setOpenEstimates([...(draftEstimates || []), ...(sentEstimates || [])]);
+      setUnpaidInvoices([...(unpaid || []), ...(partial || [])]);
+    }
+
+    load();
+  }, []);
+
   return (
     <main className="page">
-      <section className="hero">
+      <header className="page-header">
         <div>
-          <p className="eyebrow">Arborist operations suite</p>
-          <h1 className="hero-title">Arbor AI</h1>
-          <p className="hero-lede">
-            Run a modern tree service business with AI assisted workflows for lead
-            capture, estimating, and crew scheduling.
+          <p className="eyebrow">Dashboard</p>
+          <h2 className="page-title">Operations snapshot</h2>
+          <p className="page-subtitle">
+            Track today’s jobs, open estimates, and billing progress across your crews.
           </p>
-          <div className="hero-actions">
-            <a className="btn btn-primary" href="/leads">Capture a lead</a>
-            <a className="btn btn-secondary" href="/estimates">Build an estimate</a>
-          </div>
-          <div className="hero-tags">
-            <span className="tag">Tree risk notes</span>
-            <span className="tag">Scope and hazards</span>
-            <span className="tag">Crew ready plans</span>
-          </div>
         </div>
-        <div className="hero-card">
-          <h3>Workflow at a glance</h3>
-          <ol className="timeline">
-            <li>
-              <span className="step">1</span>
-              <div>Log incoming leads with property details and notes.</div>
-            </li>
-            <li>
-              <span className="step">2</span>
-              <div>Generate scope, hazards, and pricing suggestions.</div>
-            </li>
-            <li>
-              <span className="step">3</span>
-              <div>Schedule crews with AI suggestions and availability.</div>
-            </li>
-            <li>
-              <span className="step">4</span>
-              <div>Issue invoices and keep job status visible.</div>
-            </li>
-          </ol>
+        <div className="table-actions">
+          <Link className="btn btn-primary" href="/estimates">
+            New Estimate
+          </Link>
+          <Link className="btn btn-secondary" href="/jobs">
+            Schedule Job
+          </Link>
         </div>
-      </section>
+      </header>
 
-      <section className="feature-grid">
-        <div className="feature-card">
-          <h4>Polished estimates</h4>
-          <p>Turn field notes into clear scope, hazards, and equipment lists.</p>
+      <section className="card-grid">
+        <div className="stat-card">
+          <div className="eyebrow">Today</div>
+          <div className="stat-value">{stats?.todays_jobs ?? 0}</div>
+          <p className="card-subtitle">Jobs scheduled today</p>
         </div>
-        <div className="feature-card">
-          <h4>Operational clarity</h4>
-          <p>Keep crews aligned with the latest schedule and customer updates.</p>
+        <div className="stat-card">
+          <div className="eyebrow">Upcoming</div>
+          <div className="stat-value">{stats?.upcoming_jobs ?? 0}</div>
+          <p className="card-subtitle">Jobs in the pipeline</p>
         </div>
-        <div className="feature-card">
-          <h4>Billing confidence</h4>
-          <p>Track job completion and invoice status in one place.</p>
+        <div className="stat-card">
+          <div className="eyebrow">Revenue</div>
+          <div className="stat-value">${stats?.month_revenue?.toFixed?.(0) ?? 0}</div>
+          <p className="card-subtitle">Month to date</p>
+        </div>
+        <div className="stat-card">
+          <div className="eyebrow">Jobs done</div>
+          <div className="stat-value">{stats?.jobs_completed ?? 0}</div>
+          <p className="card-subtitle">Completed this month</p>
         </div>
       </section>
 
       <section className="card section">
         <div className="card-header">
           <div>
-            <div className="card-title">Built for arborist crews</div>
-            <p className="card-subtitle">
-              Manage lead intake, estimate approvals, and crew schedules without
-              leaving your operations hub.
-            </p>
+            <div className="card-title">Today’s jobs</div>
+            <p className="card-subtitle">Crews and job status for the day.</p>
           </div>
-          <span className="badge">Tree care focus</span>
+          <span className="badge">{todaysJobs.length} jobs</span>
         </div>
-        <div className="panel-grid">
-          <div className="panel">
-            <div className="list-title">AI field summaries</div>
-            <p className="list-meta">
-              Organize inspection notes, hazards, and equipment needs.
-            </p>
+        {todaysJobs.length === 0 ? (
+          <p className="card-subtitle">No jobs scheduled today.</p>
+        ) : (
+          <ul className="list">
+            {todaysJobs.map((job) => (
+              <li className="list-item" key={job.id}>
+                <div>
+                  <div className="list-title">Job #{job.id}</div>
+                  <div className="list-meta">Customer #{job.customer_id}</div>
+                </div>
+                <StatusChip status={job.status} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="card section">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Open estimates</div>
+            <p className="card-subtitle">Draft and sent proposals awaiting approval.</p>
           </div>
-          <div className="panel">
-            <div className="list-title">Season ready planning</div>
-            <p className="list-meta">
-              Balance crews, equipment, and storm response priorities.
-            </p>
-          </div>
-          <div className="panel">
-            <div className="list-title">Customer confidence</div>
-            <p className="list-meta">
-              Share professional scope and pricing details every time.
-            </p>
-          </div>
+          <span className="badge">{openEstimates.length} open</span>
         </div>
+        {openEstimates.length === 0 ? (
+          <p className="card-subtitle">No open estimates.</p>
+        ) : (
+          <ul className="list">
+            {openEstimates.slice(0, 5).map((estimate) => (
+              <li className="list-item" key={estimate.id}>
+                <div>
+                  <div className="list-title">Estimate #{estimate.id}</div>
+                  <div className="list-meta">Customer #{estimate.customer_id}</div>
+                </div>
+                <StatusChip status={estimate.status} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="card section">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Unpaid invoices</div>
+            <p className="card-subtitle">Track balances and follow up.</p>
+          </div>
+          <span className="badge">{unpaidInvoices.length} unpaid</span>
+        </div>
+        {unpaidInvoices.length === 0 ? (
+          <p className="card-subtitle">All invoices are paid.</p>
+        ) : (
+          <ul className="list">
+            {unpaidInvoices.slice(0, 5).map((invoice) => (
+              <li className="list-item" key={invoice.id}>
+                <div>
+                  <div className="list-title">Invoice #{invoice.id}</div>
+                  <div className="list-meta">${invoice.total} due</div>
+                </div>
+                <StatusChip status={invoice.status} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="card section">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Upcoming jobs</div>
+            <p className="card-subtitle">Work scheduled for the coming days.</p>
+          </div>
+          <span className="badge">{upcomingJobs.length} upcoming</span>
+        </div>
+        {upcomingJobs.length === 0 ? (
+          <p className="card-subtitle">No upcoming jobs scheduled.</p>
+        ) : (
+          <ul className="list">
+            {upcomingJobs.slice(0, 5).map((job) => (
+              <li className="list-item" key={job.id}>
+                <div>
+                  <div className="list-title">Job #{job.id}</div>
+                  <div className="list-meta">Customer #{job.customer_id}</div>
+                </div>
+                <StatusChip status={job.status} />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </main>
   );

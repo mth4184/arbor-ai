@@ -66,28 +66,45 @@ textarea {
 
 .app-shell {
   min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  background: var(--cream-50);
+}
+
+.sidebar {
+  background: linear-gradient(180deg, var(--forest-900), var(--forest-700));
+  color: #f2f6f1;
+  padding: 28px 24px;
   display: flex;
   flex-direction: column;
-}
-
-.site-header {
-  padding: 28px 40px 24px;
-  background: linear-gradient(135deg, var(--forest-900), var(--forest-700));
-  color: #f2f6f1;
-}
-
-.header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 24px;
-  flex-wrap: wrap;
 }
 
-.site-brand {
+.sidebar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  padding: 28px 40px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.topbar-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--forest-900);
 }
 
 .brand-mark {
@@ -125,35 +142,40 @@ textarea {
   letter-spacing: 1px;
 }
 
-.site-nav {
-  display: flex;
-  gap: 12px;
-  margin-top: 18px;
-  flex-wrap: wrap;
+.sidebar-nav {
+  display: grid;
+  gap: 8px;
 }
 
 .nav-link {
   color: #f2f6f1;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  padding: 10px 14px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.2px;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateX(2px);
+}
+
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .content {
   flex: 1;
-  padding: 32px 40px 56px;
+  padding: 24px 40px 56px;
 }
 
 .page {
-  max-width: 1120px;
+  max-width: 1200px;
   margin: 0 auto;
   background: #fff;
   border-radius: var(--radius-xl);
@@ -201,6 +223,45 @@ textarea {
   font-weight: 700;
   letter-spacing: 0.6px;
   text-transform: uppercase;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  background: var(--sage-100);
+  color: var(--forest-800);
+}
+
+.chip-green {
+  background: rgba(111, 166, 90, 0.2);
+  color: #3b6e2f;
+}
+
+.chip-yellow {
+  background: rgba(242, 210, 120, 0.2);
+  color: #8b6f12;
+}
+
+.chip-blue {
+  background: rgba(95, 143, 175, 0.2);
+  color: #24516e;
+}
+
+.chip-red {
+  background: rgba(214, 97, 82, 0.2);
+  color: #8f2e22;
+}
+
+.chip-gray {
+  background: rgba(120, 130, 120, 0.2);
+  color: #4f5c4f;
 }
 
 .hero {
@@ -357,6 +418,64 @@ textarea {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--sage-200);
+  font-size: 14px;
+}
+
+.table th {
+  color: var(--forest-800);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid var(--sage-200);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--forest-900);
+}
+
+.page-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 2fr 1fr;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -488,12 +607,30 @@ textarea {
 }
 
 @media (max-width: 900px) {
-  .site-header {
-    padding: 24px;
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+  }
+
+  .sidebar-nav {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+    gap: 10px;
+  }
+
+  .topbar {
+    padding: 20px;
   }
 
   .content {
-    padding: 24px;
+    padding: 20px;
   }
 
   .page {
@@ -506,12 +643,7 @@ textarea {
 }
 
 @media (max-width: 600px) {
-  .site-nav {
-    width: 100%;
-  }
-
-  .nav-link {
-    width: 100%;
-    justify-content: center;
+  .page-grid {
+    grid-template-columns: 1fr;
   }
 }
