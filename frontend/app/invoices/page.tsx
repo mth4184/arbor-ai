@@ -15,6 +15,7 @@ export default function InvoicesPage() {
   const [taxRate, setTaxRate] = useState(0);
   const [sentDate, setSentDate] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
 
@@ -36,6 +37,12 @@ export default function InvoicesPage() {
       setSentDate(today);
     }
   }, [sentDate]);
+  useEffect(() => {
+    if (!invoiceDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      setInvoiceDate(today);
+    }
+  }, [invoiceDate]);
   useEffect(() => {
     const filteredJobs = jobs.filter((job) => String(job.customer_id) === customerId);
     if (!jobId && filteredJobs.length) {
@@ -60,6 +67,7 @@ export default function InvoicesPage() {
       tax: taxAmount,
       total: subtotal + taxAmount,
       status: "unpaid",
+      issued_at: invoiceDate ? `${invoiceDate}T00:00:00` : null,
       sent_at: sentDate ? `${sentDate}T00:00:00` : null,
       due_date: dueDate ? `${dueDate}T00:00:00` : null,
     });
@@ -146,6 +154,16 @@ export default function InvoicesPage() {
             />
           </div>
           <div className="field">
+            <label className="label" htmlFor="invoice-date">Invoice date</label>
+            <input
+              id="invoice-date"
+              className="input"
+              type="date"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
+            />
+          </div>
+          <div className="field">
             <label className="label" htmlFor="invoice-sent">Date sent</label>
             <input
               id="invoice-sent"
@@ -206,6 +224,7 @@ export default function InvoicesPage() {
                 <th>Invoice</th>
                 <th>Job</th>
                 <th>Total</th>
+                <th>Date</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -216,6 +235,7 @@ export default function InvoicesPage() {
                   <td>{customers.find((c) => c.id === i.customer_id)?.name || "Customer"} Invoice #{i.id}</td>
                   <td>Job #{i.job_id}</td>
                   <td>${i.total}</td>
+                  <td>{i.issued_at ? String(i.issued_at).slice(0, 10) : "-"}</td>
                   <td>
                     <StatusChip status={i.status} />
                   </td>

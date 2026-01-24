@@ -253,6 +253,7 @@ def create_invoice(db: Session, payload):
         subtotal=payload.subtotal,
         tax=payload.tax,
         total=payload.total,
+        issued_at=payload.issued_at,
         sent_at=payload.sent_at,
         due_date=payload.due_date,
         notes=payload.notes,
@@ -294,7 +295,10 @@ def list_invoices(
                 func.lower(models.Customer.company_name).like(like),
             )
         )
-    return query.order_by(models.Invoice.id.desc()).all()
+    issued_order = models.Invoice.issued_at.desc()
+    if db.bind and db.bind.dialect.name == "sqlite":
+        return query.order_by(issued_order, models.Invoice.id.desc()).all()
+    return query.order_by(issued_order.nullslast(), models.Invoice.id.desc()).all()
 
 
 def record_payment(db: Session, invoice: models.Invoice, payload):
