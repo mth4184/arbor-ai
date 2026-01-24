@@ -208,6 +208,7 @@ def convert_estimate_to_job(
         scheduled_start=payload.scheduled_start,
         scheduled_end=payload.scheduled_end,
         crew_id=payload.crew_id,
+        service_address=estimate.service_address,
         total=estimate.total,
         notes=payload.notes,
         tasks=payload.tasks,
@@ -257,6 +258,7 @@ def approve_estimate_and_invoice(
         tax=estimate.tax,
         total=estimate.total,
         issued_at=payload.issued_at or datetime.utcnow(),
+        service_address=estimate.service_address,
         due_date=payload.due_date,
         notes=estimate.notes,
     )
@@ -269,7 +271,7 @@ def approve_estimate_and_invoice(
 # Jobs
 @app.post("/jobs", response_model=schemas.JobOut)
 def create_job(payload: schemas.JobCreate, db: Session = Depends(get_db)):
-    get_or_404(db, models.Customer, payload.customer_id, "Customer")
+    customer = get_or_404(db, models.Customer, payload.customer_id, "Customer")
     if payload.estimate_id:
         estimate = get_or_404(db, models.Estimate, payload.estimate_id, "Estimate")
         if estimate.customer_id != payload.customer_id:
@@ -280,6 +282,8 @@ def create_job(payload: schemas.JobCreate, db: Session = Depends(get_db)):
         get_or_404(db, models.SalesRep, payload.sales_rep_id, "Sales rep")
     if payload.job_type_id:
         get_or_404(db, models.JobType, payload.job_type_id, "Job type")
+    if not payload.service_address:
+        payload = payload.model_copy(update={"service_address": customer.service_address})
     validate_status(payload.status, {"scheduled", "in_progress", "completed", "canceled"}, "job")
     return crud.create_job(db, payload, payload.tasks, payload.equipment_ids)
 
@@ -322,6 +326,8 @@ def update_job(job_id: int, payload: schemas.JobUpdate, db: Session = Depends(ge
         get_or_404(db, models.SalesRep, updates["sales_rep_id"], "Sales rep")
     if updates.get("job_type_id"):
         get_or_404(db, models.JobType, updates["job_type_id"], "Job type")
+    if "service_address" in updates and updates["service_address"] is None:
+        updates["service_address"] = ""
     return crud.update_job(db, job, **updates)
 
 
@@ -417,6 +423,7 @@ def complete_job(job_id: int, payload: schemas.JobCompleteRequest, db: Session =
         tax=tax,
         total=total,
         due_date=payload.invoice_due_date,
+        service_address=job.service_address,
         notes=payload.invoice_notes,
     )
     db.add(invoice)
@@ -436,6 +443,8 @@ def create_invoice(payload: schemas.InvoiceCreate, db: Session = Depends(get_db)
     total = payload.total or max(subtotal + payload.tax, 0.0)
     if payload.issued_at is None:
         payload = payload.model_copy(update={"issued_at": datetime.utcnow()})
+    if not payload.service_address:
+        payload = payload.model_copy(update={"service_address": job.service_address})
     payload = payload.model_copy(update={"subtotal": subtotal, "total": total})
     return crud.create_invoice(db, payload)
 

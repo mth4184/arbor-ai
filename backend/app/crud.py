@@ -187,6 +187,7 @@ def create_job(db: Session, payload, tasks, equipment_ids):
         crew_id=payload.crew_id,
         sales_rep_id=payload.sales_rep_id,
         job_type_id=payload.job_type_id,
+        service_address=payload.service_address,
         total=payload.total,
         notes=payload.notes,
     )
@@ -260,6 +261,7 @@ def create_invoice(db: Session, payload):
         tax=payload.tax,
         total=payload.total,
         issued_at=payload.issued_at,
+        service_address=payload.service_address,
         due_date=payload.due_date,
         notes=payload.notes,
     )

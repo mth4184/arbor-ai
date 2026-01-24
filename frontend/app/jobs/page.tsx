@@ -22,6 +22,7 @@ export default function JobsPage() {
   const [status, setStatus] = useState("scheduled");
   const [scheduledStart, setScheduledStart] = useState("");
   const [scheduledEnd, setScheduledEnd] = useState("");
+  const [serviceAddress, setServiceAddress] = useState("");
   const [total, setTotal] = useState(0);
   const [notes, setNotes] = useState("");
   const [search, setSearch] = useState("");
@@ -49,6 +50,13 @@ export default function JobsPage() {
     refresh();
   }, [search, statusFilter]);
 
+  useEffect(() => {
+    const customer = customers.find((item) => String(item.id) === customerId);
+    if (customer && !serviceAddress) {
+      setServiceAddress(customer.service_address || "");
+    }
+  }, [customerId, customers, serviceAddress]);
+
   async function createJob() {
     if (!customerId) return;
     await apiPost("/jobs", {
@@ -60,6 +68,7 @@ export default function JobsPage() {
       crew_id: crewId ? Number(crewId) : null,
       sales_rep_id: salesRepId ? Number(salesRepId) : null,
       job_type_id: jobTypeId ? Number(jobTypeId) : null,
+      service_address: serviceAddress,
       total,
       notes,
       tasks: [],
@@ -72,6 +81,7 @@ export default function JobsPage() {
     setNewJobType("");
     setScheduledStart("");
     setScheduledEnd("");
+    setServiceAddress("");
     setTotal(0);
     setNotes("");
     await refresh();
@@ -214,6 +224,14 @@ export default function JobsPage() {
               type="date"
               value={scheduledEnd}
               onChange={(e) => setScheduledEnd(e.target.value)}
+            />
+          </div>
+          <div className="field field-full">
+            <label className="label">Service address</label>
+            <input
+              className="input"
+              value={serviceAddress}
+              onChange={(e) => setServiceAddress(e.target.value)}
             />
           </div>
           <div className="field">

@@ -225,6 +225,7 @@ class JobBase(BaseModel):
     crew_id: Optional[int] = None
     sales_rep_id: Optional[int] = None
     job_type_id: Optional[int] = None
+    service_address: str = ""
     total: float = 0.0
     notes: str = ""
 
@@ -243,6 +244,7 @@ class JobUpdate(BaseModel):
     crew_id: Optional[int] = None
     sales_rep_id: Optional[int] = None
     job_type_id: Optional[int] = None
+    service_address: Optional[str] = None
     total: Optional[float] = None
     notes: Optional[str] = None
 
@@ -277,6 +279,7 @@ class InvoiceBase(BaseModel):
     tax: float = 0.0
     total: float = 0.0
     issued_at: Optional[datetime] = None
+    service_address: str = ""
     due_date: Optional[datetime] = None
     notes: str = ""
 
@@ -291,6 +294,7 @@ class InvoiceUpdate(BaseModel):
     tax: Optional[float] = None
     total: Optional[float] = None
     issued_at: Optional[datetime] = None
+    service_address: Optional[str] = None
     due_date: Optional[datetime] = None
     notes: Optional[str] = None
 

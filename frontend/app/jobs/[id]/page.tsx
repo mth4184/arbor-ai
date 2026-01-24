@@ -253,6 +253,14 @@ export default function JobDetailPage() {
                 }
               />
             </div>
+            <div className="field field-full">
+              <label className="label">Service address</label>
+              <input
+                className="input"
+                value={job.service_address ?? ""}
+                onChange={(e) => setJob({ ...job, service_address: e.target.value })}
+              />
+            </div>
             <div className="field">
               <label className="label">Total</label>
               <NumberInput

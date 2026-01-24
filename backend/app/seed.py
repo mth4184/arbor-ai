@@ -196,6 +196,7 @@ def seed_db():
             scheduled_end=start + timedelta(hours=6),
             crew_id=crew.id,
             sales_rep_id=random.choice(sales_reps).id if sales_reps else None,
+            service_address=customer.service_address,
             total=estimate.total,
             notes="Ensure permits on file.",
             completed_at=start + timedelta(hours=6) if random.random() > 0.6 else None,
@@ -226,6 +227,7 @@ def seed_db():
             tax=tax,
             total=total,
             issued_at=datetime.utcnow() - timedelta(days=random.randint(1, 7)),
+            service_address=job.service_address,
             due_date=datetime.utcnow() + timedelta(days=30),
             notes="Net 30",
         )

@@ -387,7 +387,7 @@ export default function InvoiceDetailPage() {
             <div>
               <div className="pdf-label">Bill to</div>
               <div className="pdf-strong">{customerName || "Customer"}</div>
-              <div className="pdf-muted">{customer?.billing_address || customer?.service_address || ""}</div>
+              <div className="pdf-muted">{invoice.service_address || customer?.service_address || ""}</div>
               <div className="pdf-muted">{customer?.email || ""}</div>
             </div>
             <div>
