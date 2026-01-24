@@ -19,6 +19,7 @@ export default function EstimatesPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [estimates, setEstimates] = useState<any[]>([]);
   const [approvalEstimates, setApprovalEstimates] = useState<any[]>([]);
+  const [crews, setCrews] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
   const [status, setStatus] = useState("draft");
   const [taxRate, setTaxRate] = useState(0);
@@ -34,25 +35,31 @@ export default function EstimatesPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [activeTab, setActiveTab] = useState<"builder" | "approve">("builder");
   const [selectedEstimateId, setSelectedEstimateId] = useState<string>("");
-  const [invoiceDate, setInvoiceDate] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [scheduledStart, setScheduledStart] = useState("");
+  const [scheduledEnd, setScheduledEnd] = useState("");
+  const [crewId, setCrewId] = useState<string>("");
 
   async function refresh() {
-    const [customerItems, estimateItems, sentEstimates, approvedEstimates] = await Promise.all([
+    const [customerItems, estimateItems, sentEstimates, approvedEstimates, crewItems] = await Promise.all([
       apiGet("/customers"),
       apiGet("/estimates", { q: search, status: statusFilter || undefined }),
       apiGet("/estimates", { status: "sent" }),
       apiGet("/estimates", { status: "approved" }),
+      apiGet("/crews"),
     ]);
     setCustomers(customerItems);
     setEstimates(estimateItems);
     const approvalList = [...(sentEstimates || []), ...(approvedEstimates || [])];
     setApprovalEstimates(approvalList);
+    setCrews(crewItems || []);
     if (!customerId && customerItems.length) {
       setCustomerId(String(customerItems[0].id));
     }
     if (!selectedEstimateId && approvalList.length) {
       setSelectedEstimateId(String(approvalList[0].id));
+    }
+    if (!crewId && crewItems?.length) {
+      setCrewId(String(crewItems[0].id));
     }
   }
 
@@ -66,13 +73,6 @@ export default function EstimatesPage() {
       setServiceAddress(customer.service_address || "");
     }
   }, [customerId, customers, serviceAddress]);
-
-  useEffect(() => {
-    if (!invoiceDate) {
-      const today = new Date().toISOString().slice(0, 10);
-      setInvoiceDate(today);
-    }
-  }, [invoiceDate]);
 
   function updateItem(index: number, key: keyof LineItem, value: string | number) {
     setLineItems((items) =>
@@ -117,16 +117,16 @@ export default function EstimatesPage() {
     await refresh();
   }
 
-  async function approveAndInvoice() {
+  async function approveAndCreateJob() {
     if (!selectedEstimateId) return;
-    const now = new Date();
-    const time = now.toISOString().slice(11, 19);
-    const invoice = await apiPost(`/estimates/${selectedEstimateId}/approve-invoice`, {
-      issued_at: invoiceDate ? `${invoiceDate}T${time}` : null,
-      due_date: dueDate ? `${dueDate}T00:00:00` : null,
+    const job = await apiPost(`/estimates/${selectedEstimateId}/convert`, {
+      scheduled_start: scheduledStart ? `${scheduledStart}T00:00:00` : null,
+      scheduled_end: scheduledEnd ? `${scheduledEnd}T00:00:00` : null,
+      crew_id: crewId ? Number(crewId) : null,
+      status: "scheduled",
     });
-    if (invoice?.id) {
-      router.push(`/invoices/${invoice.id}`);
+    if (job?.id) {
+      router.push(`/jobs/${job.id}`);
     }
   }
 
@@ -151,7 +151,7 @@ export default function EstimatesPage() {
             className={activeTab === "approve" ? "btn btn-primary" : "btn btn-secondary"}
             onClick={() => setActiveTab("approve")}
           >
-            Approve & Invoice
+            Approve & Create Job
           </button>
         </div>
       </header>
@@ -298,9 +298,9 @@ export default function EstimatesPage() {
         <section className="card">
           <div className="card-header">
             <div>
-              <div className="card-title">Approve estimate & create invoice</div>
+              <div className="card-title">Approve estimate & create job</div>
               <p className="card-subtitle">
-                Once approved, this will create an invoice and take you to billing.
+                Once approved, this will create a job and take you to scheduling.
               </p>
             </div>
             <span className="badge">Workflow</span>
@@ -323,27 +323,38 @@ export default function EstimatesPage() {
               </select>
             </div>
             <div className="field">
-              <label className="label">Invoice date</label>
+              <label className="label">Scheduled start</label>
               <input
                 className="input"
                 type="date"
-                value={invoiceDate}
-                onChange={(e) => setInvoiceDate(e.target.value)}
+                value={scheduledStart}
+                onChange={(e) => setScheduledStart(e.target.value)}
               />
             </div>
             <div className="field">
-              <label className="label">Due date</label>
+              <label className="label">Scheduled end</label>
               <input
                 className="input"
                 type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                value={scheduledEnd}
+                onChange={(e) => setScheduledEnd(e.target.value)}
               />
+            </div>
+            <div className="field">
+              <label className="label">Crew</label>
+              <select className="select" value={crewId} onChange={(e) => setCrewId(e.target.value)}>
+                <option value="">Unassigned</option>
+                {crews.map((crew) => (
+                  <option key={crew.id} value={crew.id}>
+                    {crew.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="form-actions">
-            <button className="btn btn-primary" onClick={approveAndInvoice}>
-              Approve + Create Invoice
+            <button className="btn btn-primary" onClick={approveAndCreateJob}>
+              Approve + Create Job
             </button>
           </div>
           <div className="section">
