@@ -14,8 +14,13 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("crews", sa.Column("type", sa.String(length=20), nullable=False, server_default="GTC"))
-    op.alter_column("crews", "type", server_default=None)
+    op.add_column(
+        "crews",
+        sa.Column("type", sa.String(length=20), nullable=False, server_default="GTC"),
+    )
+    bind = op.get_bind()
+    if bind.dialect.name != "sqlite":
+        op.alter_column("crews", "type", server_default=None)
 
 
 def downgrade():
