@@ -13,6 +13,7 @@ export default function JobDetailPage() {
   const router = useRouter();
   const id = params?.id as string;
   const [job, setJob] = useState<any | null>(null);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
@@ -29,15 +30,17 @@ export default function JobDetailPage() {
   const [completeStatus, setCompleteStatus] = useState<"idle" | "saving" | "error">("idle");
 
   async function load() {
-    const [jobItem, files, equipmentItems, crewItems, salesRepItems, jobTypeItems] = await Promise.all([
+    const [jobItem, files, equipmentItems, crewItems, salesRepItems, jobTypeItems, customerItems] = await Promise.all([
       apiGet(`/jobs/${id}`),
       apiGet("/attachments", { entity_type: "job", entity_id: id }),
       apiGet("/equipment"),
       apiGet("/crews"),
       apiGet("/sales-reps"),
       apiGet("/job-types"),
+      apiGet("/customers"),
     ]);
     setJob(jobItem);
+    setCustomers(customerItems || []);
     setTasks(jobItem.tasks || []);
     setAttachments(files || []);
     setEquipment(equipmentItems || []);
@@ -164,8 +167,26 @@ export default function JobDetailPage() {
           </div>
           <div className="form-grid">
             <div className="field">
-              <label className="label">Customer ID</label>
-              <input className="input" value={job.customer_id} disabled />
+              <label className="label">Customer</label>
+              <select
+                className="select"
+                value={job.customer_id ?? ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const customer = customers.find((item) => String(item.id) === value);
+                  setJob({
+                    ...job,
+                    customer_id: value ? Number(value) : null,
+                    service_address: customer?.service_address || job.service_address,
+                  });
+                }}
+              >
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label className="label">Crew</label>

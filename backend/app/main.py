@@ -326,6 +326,14 @@ def update_job(job_id: int, payload: schemas.JobUpdate, db: Session = Depends(ge
         get_or_404(db, models.SalesRep, updates["sales_rep_id"], "Sales rep")
     if updates.get("job_type_id"):
         get_or_404(db, models.JobType, updates["job_type_id"], "Job type")
+    if updates.get("customer_id"):
+        customer = get_or_404(db, models.Customer, updates["customer_id"], "Customer")
+        if job.estimate_id:
+            estimate = get_or_404(db, models.Estimate, job.estimate_id, "Estimate")
+            if estimate.customer_id != updates["customer_id"]:
+                raise HTTPException(status_code=400, detail="Estimate does not match customer")
+        if not updates.get("service_address"):
+            updates["service_address"] = customer.service_address
     if "service_address" in updates and updates["service_address"] is None:
         updates["service_address"] = ""
     return crud.update_job(db, job, **updates)

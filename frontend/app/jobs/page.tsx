@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { apiGet, apiPost, apiPut } from "../api";
+import { apiGet, apiPost } from "../api";
 import StatusChip from "../components/StatusChip";
 import NumberInput from "../components/NumberInput";
 
@@ -288,51 +288,41 @@ export default function JobsPage() {
                 <th>Crew</th>
                 <th>Sales rep</th>
                 <th>Job type</th>
+                <th>Address</th>
+                <th>Scheduled start</th>
                 <th>Status</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id}>
-                  <td>Job #{job.id}</td>
-                  <td>
-                    <select
-                      className="select"
-                      value={job.customer_id ?? ""}
-                      onChange={async (e) => {
-                        const value = e.target.value;
-                        if (!value) return;
-                        await apiPut(`/jobs/${job.id}`, { customer_id: Number(value) });
-                        await refresh();
-                      }}
-                    >
-                      {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id}>
-                          {customer.name}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>{job.crew_id ? `Crew #${job.crew_id}` : "Unassigned"}</td>
-                  <td>
-                    {salesReps.find((rep) => rep.id === job.sales_rep_id)?.name ||
-                      (job.sales_rep_id ? `Rep #${job.sales_rep_id}` : "Unassigned")}
-                  </td>
-                  <td>
-                    {jobTypes.find((type) => type.id === job.job_type_id)?.name ||
-                      (job.job_type_id ? `Type #${job.job_type_id}` : "-")}
-                  </td>
-                  <td>
-                    <StatusChip status={job.status} />
-                  </td>
-                  <td>
-                    <Link className="btn btn-secondary" href={`/jobs/${job.id}`}>
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {jobs.map((job) => {
+                const customer = customers.find((item) => item.id === job.customer_id);
+                return (
+                  <tr key={job.id}>
+                    <td>Job #{job.id}</td>
+                    <td>{customer?.name || `Customer #${job.customer_id}`}</td>
+                    <td>{job.crew_id ? `Crew #${job.crew_id}` : "Unassigned"}</td>
+                    <td>
+                      {salesReps.find((rep) => rep.id === job.sales_rep_id)?.name ||
+                        (job.sales_rep_id ? `Rep #${job.sales_rep_id}` : "Unassigned")}
+                    </td>
+                    <td>
+                      {jobTypes.find((type) => type.id === job.job_type_id)?.name ||
+                        (job.job_type_id ? `Type #${job.job_type_id}` : "-")}
+                    </td>
+                    <td>{job.service_address || customer?.service_address || "-"}</td>
+                    <td>{job.scheduled_start ? String(job.scheduled_start).slice(0, 10) : "-"}</td>
+                    <td>
+                      <StatusChip status={job.status} />
+                    </td>
+                    <td>
+                      <Link className="btn btn-secondary" href={`/jobs/${job.id}`}>
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
