@@ -131,6 +131,7 @@ class EstimateBase(BaseModel):
     customer_id: int
     lead_id: Optional[int] = None
     status: str = "draft"
+    service_address: str = ""
     scope: str = ""
     hazards: str = ""
     equipment: str = ""
@@ -151,6 +152,7 @@ class EstimateUpdate(BaseModel):
     customer_id: Optional[int] = None
     lead_id: Optional[int] = None
     status: Optional[str] = None
+    service_address: Optional[str] = None
     scope: Optional[str] = None
     hazards: Optional[str] = None
     equipment: Optional[str] = None

@@ -128,6 +128,7 @@ def create_estimate(db: Session, payload, line_items):
         customer_id=payload.customer_id,
         lead_id=payload.lead_id,
         status=payload.status,
+        service_address=payload.service_address,
         scope=payload.scope,
         hazards=payload.hazards,
         equipment=payload.equipment,

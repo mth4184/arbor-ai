@@ -181,6 +181,14 @@ export default function EstimateDetailPage() {
               <input className="input" type="number" value={estimate.total} disabled />
             </div>
             <div className="field field-full">
+              <label className="label">Service address</label>
+              <input
+                className="input"
+                value={estimate.service_address || ""}
+                onChange={(e) => setEstimate({ ...estimate, service_address: e.target.value })}
+              />
+            </div>
+            <div className="field field-full">
               <label className="label">Scope</label>
               <textarea
                 className="textarea"

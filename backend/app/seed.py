@@ -158,6 +158,7 @@ def seed_db():
             customer_id=customer.id,
             lead_id=lead.id,
             status=status,
+            service_address=customer.service_address,
             scope="Remove two mature oaks",
             hazards="Utility lines on north side",
             equipment="Bucket truck, chipper",

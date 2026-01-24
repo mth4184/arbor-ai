@@ -69,6 +69,7 @@ class Estimate(Base):
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
     lead_id: Mapped[int | None] = mapped_column(ForeignKey("leads.id"), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="draft")
+    service_address: Mapped[str] = mapped_column(Text, default="")
     scope: Mapped[str] = mapped_column(Text, default="")
     hazards: Mapped[str] = mapped_column(Text, default="")
     equipment: Mapped[str] = mapped_column(Text, default="")

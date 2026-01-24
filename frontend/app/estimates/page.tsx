@@ -23,6 +23,7 @@ export default function EstimatesPage() {
   const [status, setStatus] = useState("draft");
   const [taxRate, setTaxRate] = useState(0);
   const [discount, setDiscount] = useState(0);
+  const [serviceAddress, setServiceAddress] = useState("");
   const [scope, setScope] = useState("");
   const [hazards, setHazards] = useState("");
   const [equipment, setEquipment] = useState("");
@@ -60,6 +61,13 @@ export default function EstimatesPage() {
   }, [search, statusFilter]);
 
   useEffect(() => {
+    const customer = customers.find((item) => String(item.id) === customerId);
+    if (customer && !serviceAddress) {
+      setServiceAddress(customer.service_address || "");
+    }
+  }, [customerId, customers, serviceAddress]);
+
+  useEffect(() => {
     if (!invoiceDate) {
       const today = new Date().toISOString().slice(0, 10);
       setInvoiceDate(today);
@@ -90,6 +98,7 @@ export default function EstimatesPage() {
     await apiPost("/estimates", {
       customer_id: Number(customerId),
       status,
+      service_address: serviceAddress,
       scope,
       hazards,
       equipment,
@@ -100,6 +109,7 @@ export default function EstimatesPage() {
     setStatus("draft");
     setTaxRate(0);
     setDiscount(0);
+    setServiceAddress("");
     setScope("");
     setHazards("");
     setEquipment("");
@@ -191,6 +201,14 @@ export default function EstimatesPage() {
               value={discount}
               onValueChange={setDiscount}
               prefix="$"
+            />
+          </div>
+          <div className="field field-full">
+            <label className="label">Service address</label>
+            <input
+              className="input"
+              value={serviceAddress}
+              onChange={(e) => setServiceAddress(e.target.value)}
             />
           </div>
           <div className="field field-full">
@@ -297,7 +315,9 @@ export default function EstimatesPage() {
               >
                 {approvalEstimates.map((estimate) => (
                   <option key={estimate.id} value={estimate.id}>
-                    Estimate #{estimate.id} · Customer #{estimate.customer_id}
+                  Estimate #{estimate.id} ·{" "}
+                  {customers.find((item) => item.id === estimate.customer_id)?.name ||
+                    `Customer #${estimate.customer_id}`}
                   </option>
                 ))}
               </select>
@@ -335,7 +355,10 @@ export default function EstimatesPage() {
                   <li key={estimate.id} className="list-item">
                     <div>
                       <div className="list-title">Estimate #{estimate.id}</div>
-                      <div className="list-meta">Customer #{estimate.customer_id}</div>
+                      <div className="list-meta">
+                        {customers.find((item) => item.id === estimate.customer_id)?.name ||
+                          `Customer #${estimate.customer_id}`}
+                      </div>
                     </div>
                     <StatusChip status={estimate.status} />
                   </li>
@@ -377,27 +400,32 @@ export default function EstimatesPage() {
               <tr>
                 <th>Estimate</th>
                 <th>Customer</th>
+                <th>Address</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {estimates.map((estimate) => (
-                <tr key={estimate.id}>
-                  <td>Estimate #{estimate.id}</td>
-                  <td>Customer #{estimate.customer_id}</td>
-                  <td>${estimate.total}</td>
-                  <td>
-                    <StatusChip status={estimate.status} />
-                  </td>
-                  <td>
-                    <Link className="btn btn-secondary" href={`/estimates/${estimate.id}`}>
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {estimates.map((estimate) => {
+                const customer = customers.find((item) => item.id === estimate.customer_id);
+                return (
+                  <tr key={estimate.id}>
+                    <td>Estimate #{estimate.id}</td>
+                    <td>{customer?.name || `Customer #${estimate.customer_id}`}</td>
+                    <td>{estimate.service_address || customer?.service_address || "-"}</td>
+                    <td>${estimate.total}</td>
+                    <td>
+                      <StatusChip status={estimate.status} />
+                    </td>
+                    <td>
+                      <Link className="btn btn-secondary" href={`/estimates/${estimate.id}`}>
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
