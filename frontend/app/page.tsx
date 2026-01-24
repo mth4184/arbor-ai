@@ -30,11 +30,17 @@ export default function Home() {
           apiGet("/invoices", { status: "unpaid" }),
           apiGet("/invoices", { status: "partial" }),
         ]);
-      setStats(dashboard);
-      setTodaysJobs(todayJobs);
-      setUpcomingJobs(upcoming);
-      setOpenEstimates([...(draftEstimates || []), ...(sentEstimates || [])]);
-      setUnpaidInvoices([...(unpaid || []), ...(partial || [])]);
+      setStats(dashboard || null);
+      setTodaysJobs(Array.isArray(todayJobs) ? todayJobs : []);
+      setUpcomingJobs(Array.isArray(upcoming) ? upcoming : []);
+      setOpenEstimates([
+        ...(Array.isArray(draftEstimates) ? draftEstimates : []),
+        ...(Array.isArray(sentEstimates) ? sentEstimates : []),
+      ]);
+      setUnpaidInvoices([
+        ...(Array.isArray(unpaid) ? unpaid : []),
+        ...(Array.isArray(partial) ? partial : []),
+      ]);
     }
 
     load();
