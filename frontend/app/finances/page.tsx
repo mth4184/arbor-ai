@@ -208,6 +208,7 @@ export default function FinancesPage() {
   const [range, setRange] = useState("Last 13 weeks");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [newMetricNames, setNewMetricNames] = useState<Record<string, string>>({});
 
   const labels = useMemo(() => getLabelsForView(view), [view]);
 
@@ -235,8 +236,9 @@ export default function FinancesPage() {
     );
   }
 
-  function addMetric(groupId: string) {
+  function addMetric(groupId: string, name?: string) {
     const id = `metric-${Date.now()}`;
+    const title = name?.trim() || "New metric";
     setGroups((prev) =>
       prev.map((group) =>
         group.id === groupId
@@ -246,7 +248,7 @@ export default function FinancesPage() {
                 ...group.metrics,
                 {
                   id,
-                  title: "New metric",
+                  title,
                   goal: 0,
                   format: "number",
                   trendEnabled: false,
@@ -262,6 +264,7 @@ export default function FinancesPage() {
           : group,
       ),
     );
+    setNewMetricNames((prev) => ({ ...prev, [groupId]: "" }));
   }
 
   function addGroup() {
@@ -390,7 +393,21 @@ export default function FinancesPage() {
                     </button>
                   ))}
                 </div>
-                <button className="btn btn-secondary" onClick={() => addMetric(group.id)}>
+                <input
+                  className="input scorecard-new-metric"
+                  placeholder="New measurable name"
+                  value={newMetricNames[group.id] ?? ""}
+                  onChange={(event) =>
+                    setNewMetricNames((prev) => ({ ...prev, [group.id]: event.target.value }))
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addMetric(group.id, newMetricNames[group.id]);
+                    }
+                  }}
+                />
+                <button className="btn btn-secondary" onClick={() => addMetric(group.id, newMetricNames[group.id])}>
                   New measurable
                 </button>
               </div>

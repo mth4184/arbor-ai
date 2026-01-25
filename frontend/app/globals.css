@@ -1066,6 +1066,10 @@ textarea {
   flex-wrap: wrap;
 }
 
+.scorecard-new-metric {
+  min-width: 200px;
+}
+
 .scorecard-search {
   max-width: 220px;
 }
