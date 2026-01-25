@@ -1,5 +1,6 @@
 "use client";
 
+import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import NumberInput from "../components/NumberInput";
 
@@ -59,7 +60,6 @@ const INITIAL_TREES: TreeRecord[] = [
 ];
 
 export default function PlantInventoryPage() {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [trees, setTrees] = useState<TreeRecord[]>(INITIAL_TREES);
   const [selectedId, setSelectedId] = useState<string | null>(INITIAL_TREES[0]?.id ?? null);
   const [mapReady, setMapReady] = useState(false);
@@ -75,96 +75,90 @@ export default function PlantInventoryPage() {
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
   const markerByIdRef = useRef<Map<string, any>>(new Map());
-  const infoWindowRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
+  const layerGroupRef = useRef<any>(null);
+  const markerIconRef = useRef<any>(null);
 
   const mapMessage = useMemo(() => {
-    if (!apiKey) {
-      return "Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to enable the live map.";
-    }
     if (mapError) {
-      return "Google Maps failed to load. Check your API key and network.";
+      return "OpenStreetMap failed to load. Please refresh and try again.";
+    }
+    if (!mapReady) {
+      return "Loading map...";
     }
     return "";
-  }, [apiKey, mapError]);
+  }, [mapError, mapReady]);
 
   const treeCountLabel = `${trees.length} ${trees.length === 1 ? "tree" : "trees"}`;
-  const mapStatusLabel = apiKey ? "Google maps enabled" : "Google maps key needed";
+  const mapStatusLabel = mapError ? "Map unavailable" : mapReady ? "OpenStreetMap live" : "Loading map";
 
   useEffect(() => {
-    if (!apiKey) return;
     if (typeof window === "undefined") return;
-    if ((window as any).google?.maps) {
-      setMapReady(true);
-      return;
+    let mounted = true;
+    async function initMap() {
+      if (!mapRef.current || mapInstanceRef.current) return;
+      try {
+        const imported = await import("leaflet");
+        const L = imported.default ?? imported;
+        if (!mounted || !mapRef.current) return;
+        leafletRef.current = L;
+        const center = trees[0]
+          ? [trees[0].latitude, trees[0].longitude]
+          : [DEFAULT_CENTER.lat, DEFAULT_CENTER.lng];
+        const map = L.map(mapRef.current, { zoomControl: true }).setView(center, 12);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+        layerGroupRef.current = L.layerGroup().addTo(map);
+        markerIconRef.current = L.icon({
+          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+        mapInstanceRef.current = map;
+        setMapReady(true);
+        setTimeout(() => map.invalidateSize(), 0);
+      } catch (error) {
+        setMapError("load");
+      }
     }
-    const existing = document.querySelector<HTMLScriptElement>('script[data-google-maps="true"]');
-    if (existing) {
-      existing.addEventListener("load", () => setMapReady(true));
-      existing.addEventListener("error", () => setMapError("load"));
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
-    script.async = true;
-    script.defer = true;
-    script.dataset.googleMaps = "true";
-    script.onload = () => setMapReady(true);
-    script.onerror = () => setMapError("load");
-    document.head.appendChild(script);
-  }, [apiKey]);
+    initMap();
+    return () => {
+      mounted = false;
+    };
+  }, [trees]);
 
   useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-    if (!mapInstanceRef.current && (window as any).google?.maps) {
-      const center = trees[0] ? { lat: trees[0].latitude, lng: trees[0].longitude } : DEFAULT_CENTER;
-      mapInstanceRef.current = new (window as any).google.maps.Map(mapRef.current, {
-        center,
-        zoom: 12,
-        mapTypeControl: false,
-        fullscreenControl: false,
-        streetViewControl: false,
-      });
-      infoWindowRef.current = new (window as any).google.maps.InfoWindow();
-    }
-  }, [mapReady, trees]);
-
-  useEffect(() => {
-    if (!mapReady || !mapInstanceRef.current || !(window as any).google?.maps) return;
-    markersRef.current.forEach((marker) => marker.setMap(null));
-    const nextMarkers: any[] = [];
+    if (!mapReady || !mapInstanceRef.current || !leafletRef.current || !layerGroupRef.current) return;
+    const L = leafletRef.current;
+    layerGroupRef.current.clearLayers();
     const markerMap = new Map<string, any>();
     trees.forEach((tree) => {
-      const marker = new (window as any).google.maps.Marker({
-        position: { lat: tree.latitude, lng: tree.longitude },
-        map: mapInstanceRef.current,
+      const marker = L.marker([tree.latitude, tree.longitude], {
+        icon: markerIconRef.current ?? undefined,
         title: `${tree.name} (${tree.species})`,
-      });
-      marker.addListener("click", () => {
-        setSelectedId(tree.id);
-      });
-      nextMarkers.push(marker);
+      })
+        .addTo(layerGroupRef.current)
+        .on("click", () => setSelectedId(tree.id));
+      marker.bindPopup(`<strong>${tree.name}</strong><br/>${tree.species}`);
       markerMap.set(tree.id, marker);
     });
-    markersRef.current = nextMarkers;
     markerByIdRef.current = markerMap;
   }, [mapReady, trees]);
 
   useEffect(() => {
-    if (!selectedId || !mapInstanceRef.current || !(window as any).google?.maps) return;
+    if (!selectedId || !mapInstanceRef.current) return;
     const tree = trees.find((item) => item.id === selectedId);
     if (!tree) return;
     const map = mapInstanceRef.current;
     const marker = markerByIdRef.current.get(tree.id);
-    map.panTo({ lat: tree.latitude, lng: tree.longitude });
-    map.setZoom(14);
-    if (infoWindowRef.current && marker) {
-      infoWindowRef.current.setContent(
-        `<div style="font-weight:600;">${tree.name}</div><div style="font-size:12px;">${tree.species}</div>`,
-      );
-      infoWindowRef.current.open(map, marker);
-    }
+    map.setView([tree.latitude, tree.longitude], 14);
+    if (marker) marker.openPopup();
   }, [selectedId, trees]);
 
   function handleAddTree(event: FormEvent<HTMLFormElement>) {
@@ -205,7 +199,7 @@ export default function PlantInventoryPage() {
           <p className="eyebrow">Inventory</p>
           <h2 className="page-title">Plant inventory</h2>
           <p className="page-subtitle">
-            Track tree locations and conditions with Google Maps geospatial references.
+            Track tree locations and conditions with OpenStreetMap geospatial references.
           </p>
         </div>
         <div className="header-actions">
