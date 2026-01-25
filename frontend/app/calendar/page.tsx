@@ -73,7 +73,7 @@ export default function CalendarPage() {
       apiGet("/jobs", { status: "in_progress" }),
     ]);
     const openList = [...(Array.isArray(scheduled) ? scheduled : []), ...(Array.isArray(inProgress) ? inProgress : [])];
-    setOpenJobs(openList);
+    setOpenJobs(openList.filter((job) => !job.scheduled_start));
   }
 
   async function loadCalendar(rangeStart: Date, rangeEnd: Date) {
@@ -112,6 +112,21 @@ export default function CalendarPage() {
 
   async function assignJob(jobId: number, date: Date) {
     await apiPut(`/jobs/${jobId}`, { scheduled_start: `${date.toISOString().slice(0, 10)}T00:00:00` });
+    await loadOpenJobs();
+    if (view === "week") {
+      const end = new Date(weekStart);
+      end.setDate(weekStart.getDate() + 7);
+      await loadCalendar(weekStart, end);
+    } else {
+      const monthStart = startOfMonth(selectedMonth);
+      const monthEnd = new Date(monthStart);
+      monthEnd.setMonth(monthStart.getMonth() + 1);
+      await loadCalendar(monthStart, monthEnd);
+    }
+  }
+
+  async function unscheduleJob(jobId: number) {
+    await apiPut(`/jobs/${jobId}`, { scheduled_start: null, scheduled_end: null });
     await loadOpenJobs();
     if (view === "week") {
       const end = new Date(weekStart);
@@ -277,15 +292,24 @@ export default function CalendarPage() {
         <div className="card-header">
           <div>
             <div className="card-title">Unscheduled & active jobs</div>
-            <p className="card-subtitle">Drag a job onto the calendar to assign a date.</p>
+            <p className="card-subtitle">
+              Drag a job onto the calendar to assign a date, or drop here to unschedule.
+            </p>
           </div>
           <span className="badge">{openJobs.length} jobs</span>
         </div>
-        {openJobs.length === 0 ? (
-          <p className="card-subtitle">No active jobs to schedule.</p>
-        ) : (
-          <div className="drag-list">
-            {openJobs.map((job) => (
+        <div
+          className="drag-list"
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => {
+            const jobId = Number(event.dataTransfer.getData("text/plain"));
+            if (jobId) unscheduleJob(jobId);
+          }}
+        >
+          {openJobs.length === 0 ? (
+            <p className="card-subtitle">No active jobs to schedule.</p>
+          ) : (
+            openJobs.map((job) => (
               <div
                 key={job.id}
                 className="drag-card"
@@ -300,9 +324,9 @@ export default function CalendarPage() {
                 </div>
                 <StatusChip status={job.status} />
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </section>
     </main>
   );
