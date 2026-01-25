@@ -40,6 +40,7 @@ export default function EstimatesPage() {
   const [scheduledEnd, setScheduledEnd] = useState("");
   const [crewId, setCrewId] = useState<string>("");
   const [salesRepId, setSalesRepId] = useState<string>("");
+  const selectedSalesRepName = salesReps.find((rep) => String(rep.id) === salesRepId)?.name;
 
   async function refresh() {
     const [customerItems, estimateItems, sentEstimates, approvedEstimates, crewItems, salesRepItems] =
@@ -169,7 +170,10 @@ export default function EstimatesPage() {
             <div className="card-title">Create estimate</div>
             <p className="card-subtitle">Scope, hazards, and pricing details.</p>
           </div>
-          <span className="badge">Draft</span>
+          <div className="table-actions">
+            <span className="badge">Draft</span>
+            <span className="badge">Sales rep: {selectedSalesRepName || "Unassigned"}</span>
+          </div>
         </div>
         <div className="form-grid">
           <div className="field">
