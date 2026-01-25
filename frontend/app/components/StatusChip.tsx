@@ -8,6 +8,7 @@ const STATUS_COLORS: Record<string, string> = {
   scheduled: "chip-blue",
   in_progress: "chip-yellow",
   completed: "chip-green",
+  blocked: "chip-red",
   canceled: "chip-gray",
   unpaid: "chip-red",
   partial: "chip-yellow",
