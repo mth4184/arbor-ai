@@ -11,6 +11,7 @@ export default function Home() {
   const [upcomingJobs, setUpcomingJobs] = useState<any[]>([]);
   const [openEstimates, setOpenEstimates] = useState<any[]>([]);
   const [unpaidInvoices, setUnpaidInvoices] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
 
   useEffect(() => {
     const today = new Date();
@@ -20,7 +21,7 @@ export default function Home() {
     const isoTomorrow = tomorrow.toISOString();
 
     async function load() {
-      const [dashboard, todayJobs, upcoming, draftEstimates, sentEstimates, unpaid, partial] =
+      const [dashboard, todayJobs, upcoming, draftEstimates, sentEstimates, unpaid, partial, customerItems] =
         await Promise.all([
           apiGet("/dashboard"),
           apiGet("/jobs", { start: isoToday, end: isoTomorrow }),
@@ -29,6 +30,7 @@ export default function Home() {
           apiGet("/estimates", { status: "sent" }),
           apiGet("/invoices", { status: "unpaid" }),
           apiGet("/invoices", { status: "partial" }),
+          apiGet("/customers"),
         ]);
       setStats(dashboard || null);
       setTodaysJobs(Array.isArray(todayJobs) ? todayJobs : []);
@@ -41,6 +43,7 @@ export default function Home() {
         ...(Array.isArray(unpaid) ? unpaid : []),
         ...(Array.isArray(partial) ? partial : []),
       ]);
+      setCustomers(Array.isArray(customerItems) ? customerItems : []);
     }
 
     load();
@@ -151,15 +154,31 @@ export default function Home() {
           <p className="card-subtitle">All invoices are paid.</p>
         ) : (
           <ul className="list">
-            {unpaidInvoices.slice(0, 5).map((invoice) => (
-              <li className="list-item" key={invoice.id}>
-                <div>
-                  <div className="list-title">Invoice #{invoice.id}</div>
-                  <div className="list-meta">${invoice.total} due</div>
-                </div>
-                <StatusChip status={invoice.status} />
-              </li>
-            ))}
+            {unpaidInvoices
+              .sort((a, b) => {
+                const dateA = a.issued_at ? new Date(a.issued_at).getTime() : 0;
+                const dateB = b.issued_at ? new Date(b.issued_at).getTime() : 0;
+                return dateB - dateA;
+              })
+              .slice(0, 5)
+              .map((invoice) => {
+                const customer = customers.find((item) => item.id === invoice.customer_id);
+                return (
+                  <li className="list-item" key={invoice.id}>
+                    <div>
+                      <div className="list-title">{customer?.name || "Client"}</div>
+                      <div className="list-meta">
+                        {invoice.service_address || customer?.service_address || "-"} ·{" "}
+                        {invoice.issued_at ? String(invoice.issued_at).slice(0, 10) : "No date"}
+                      </div>
+                    </div>
+                    <div className="table-actions">
+                      <span className="list-meta">${invoice.total} due</span>
+                      <StatusChip status={invoice.status} />
+                    </div>
+                  </li>
+                );
+              })}
           </ul>
         )}
       </section>
