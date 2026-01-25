@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import NumberInput from "../components/NumberInput";
 
 type ViewMode = "weekly" | "monthly" | "quarterly" | "annual";
 
@@ -251,6 +252,20 @@ export default function FinancesPage() {
     );
   }
 
+  function updateMetricGoal(groupId: string, metricId: string, goal: number) {
+    setGroups((prev) =>
+      prev.map((group) => {
+        if (group.id !== groupId) return group;
+        return {
+          ...group,
+          metrics: group.metrics.map((metric) =>
+            metric.id === metricId ? { ...metric, goal } : metric,
+          ),
+        };
+      }),
+    );
+  }
+
   function addMetric(groupId: string, name?: string) {
     const id = `metric-${Date.now()}`;
     const title = name?.trim() || "New metric";
@@ -479,7 +494,15 @@ export default function FinancesPage() {
                             onChange={(event) => updateMetricTitle(group.id, metric.id, event.target.value)}
                           />
                         </td>
-                        <td>{metric.goal ? formatMetricValue(metric, metric.goal) : "-"}</td>
+                        <td>
+                          <NumberInput
+                            className="scorecard-goal-input"
+                            value={metric.goal}
+                            onValueChange={(value) => updateMetricGoal(group.id, metric.id, value)}
+                            prefix={metric.format === "currency" ? "$" : undefined}
+                            placeholder="—"
+                          />
+                        </td>
                         <td>{formatMetricValue(metric, average(values))}</td>
                         <td>{formatMetricValue(metric, total(values))}</td>
                         {values.map((value, idx) => {

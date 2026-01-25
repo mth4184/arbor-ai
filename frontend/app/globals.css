@@ -1199,6 +1199,11 @@ textarea {
   box-shadow: var(--shadow-soft);
 }
 
+.scorecard-goal-input {
+  width: 100%;
+  min-width: 110px;
+}
+
 .scorecard-table th:last-child,
 .scorecard-table td:last-child {
   border-right: none;
