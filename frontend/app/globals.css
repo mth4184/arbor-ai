@@ -924,12 +924,33 @@ textarea {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .scorecard-group-title {
   font-weight: 700;
   font-size: 16px;
   color: var(--forest-900);
+}
+
+.scorecard-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.scorecard-group-views {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-pill-small {
+  padding: 4px 10px;
+  font-size: 11px;
 }
 
 .scorecard-count {

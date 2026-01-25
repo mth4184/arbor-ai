@@ -378,9 +378,22 @@ export default function FinancesPage() {
               <div className="scorecard-group-title">
                 {group.name} <span className="scorecard-count">{group.metrics.length}</span>
               </div>
-              <button className="btn btn-secondary" onClick={() => addMetric(group.id)}>
-                New measurable
-              </button>
+              <div className="scorecard-group-actions">
+                <div className="scorecard-group-views">
+                  {(["weekly", "monthly", "quarterly", "annual"] as ViewMode[]).map((tab) => (
+                    <button
+                      key={tab}
+                      className={`tab-pill tab-pill-small ${view === tab ? "active" : ""}`}
+                      onClick={() => setView(tab)}
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                <button className="btn btn-secondary" onClick={() => addMetric(group.id)}>
+                  New measurable
+                </button>
+              </div>
             </div>
             <div className="scorecard-table-wrapper">
               <table className="scorecard-table">
