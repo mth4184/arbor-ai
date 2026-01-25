@@ -1,6 +1,6 @@
-# ArborGold CRM/ERP (MVP)
+# ArborSoftAI CRM/ERP (MVP)
 
-ArborGold is a tree service CRM/ERP prototype with customer intake, estimates, jobs, scheduling, and billing.
+ArborSoftAI is a tree service CRM/ERP prototype with customer intake, estimates, jobs, scheduling, and billing.
 
 ## Stack
 - **Backend:** FastAPI + SQLAlchemy + Alembic (SQLite by default)

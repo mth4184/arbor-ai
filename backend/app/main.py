@@ -10,7 +10,7 @@ from . import ai, crud, models, schemas
 from .db import get_db
 from .security import create_access_token, get_current_user, hash_password, require_roles, verify_password
 
-app = FastAPI(title="ArborGold Core")
+app = FastAPI(title="ArborSoftAI Core")
 
 app.add_middleware(
     CORSMiddleware,

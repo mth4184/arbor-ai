@@ -35,7 +35,7 @@ def seed_db():
     db = SessionLocal()
     clear_data(db)
 
-    settings = models.Settings(company_name="ArborGold Demo", default_tax_rate=0.07)
+    settings = models.Settings(company_name="ArborSoftAI Demo", default_tax_rate=0.07)
     db.add(settings)
 
     users = [

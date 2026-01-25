@@ -39,7 +39,7 @@ export default function Sidebar() {
           </svg>
         </div>
         <div>
-          <div className="brand-title">ArborGold</div>
+          <div className="brand-title">ArborSoftAI</div>
           <div className="brand-subtitle">Tree service CRM</div>
         </div>
       </div>

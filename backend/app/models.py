@@ -271,7 +271,7 @@ class Attachment(Base):
 class Settings(Base):
     __tablename__ = "settings"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
-    company_name: Mapped[str] = mapped_column(String(200), default="ArborGold Pro")
+    company_name: Mapped[str] = mapped_column(String(200), default="ArborSoftAI Pro")
     company_logo_url: Mapped[str] = mapped_column(Text, default="")
     default_tax_rate: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

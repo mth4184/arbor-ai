@@ -10,7 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="main">
             <header className="topbar">
               <div>
-                <div className="eyebrow">ArborGold Ops</div>
+                <div className="eyebrow">ArborSoftAI Ops</div>
                 <div className="topbar-title">Operations Hub</div>
               </div>
               <div className="header-actions">
@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </header>
             <div className="content">{children}</div>
             <footer className="site-footer">
-              ArborGold keeps estimates, crews, and invoicing in one place.
+              ArborSoftAI keeps estimates, crews, and invoicing in one place.
             </footer>
           </div>
         </div>
