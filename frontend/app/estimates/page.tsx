@@ -20,6 +20,7 @@ export default function EstimatesPage() {
   const [estimates, setEstimates] = useState<any[]>([]);
   const [approvalEstimates, setApprovalEstimates] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
+  const [salesReps, setSalesReps] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
   const [status, setStatus] = useState("draft");
   const [taxRate, setTaxRate] = useState(0);
@@ -38,20 +39,24 @@ export default function EstimatesPage() {
   const [scheduledStart, setScheduledStart] = useState("");
   const [scheduledEnd, setScheduledEnd] = useState("");
   const [crewId, setCrewId] = useState<string>("");
+  const [salesRepId, setSalesRepId] = useState<string>("");
 
   async function refresh() {
-    const [customerItems, estimateItems, sentEstimates, approvedEstimates, crewItems] = await Promise.all([
-      apiGet("/customers"),
-      apiGet("/estimates", { q: search, status: statusFilter || undefined }),
-      apiGet("/estimates", { status: "sent" }),
-      apiGet("/estimates", { status: "approved" }),
-      apiGet("/crews"),
-    ]);
+    const [customerItems, estimateItems, sentEstimates, approvedEstimates, crewItems, salesRepItems] =
+      await Promise.all([
+        apiGet("/customers"),
+        apiGet("/estimates", { q: search, status: statusFilter || undefined }),
+        apiGet("/estimates", { status: "sent" }),
+        apiGet("/estimates", { status: "approved" }),
+        apiGet("/crews"),
+        apiGet("/sales-reps"),
+      ]);
     setCustomers(customerItems);
     setEstimates(estimateItems);
     const approvalList = [...(sentEstimates || []), ...(approvedEstimates || [])];
     setApprovalEstimates(approvalList);
     setCrews(crewItems || []);
+    setSalesReps(salesRepItems || []);
     if (!customerId && customerItems.length) {
       setCustomerId(String(customerItems[0].id));
     }
@@ -97,6 +102,7 @@ export default function EstimatesPage() {
     const taxAmount = Number(((subtotal * taxRate) / 100).toFixed(2));
     await apiPost("/estimates", {
       customer_id: Number(customerId),
+      sales_rep_id: salesRepId ? Number(salesRepId) : null,
       status,
       service_address: serviceAddress,
       scope,
@@ -172,6 +178,17 @@ export default function EstimatesPage() {
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label className="label">Sales rep</label>
+            <select className="select" value={salesRepId} onChange={(e) => setSalesRepId(e.target.value)}>
+              <option value="">Unassigned</option>
+              {salesReps.map((rep) => (
+                <option key={rep.id} value={rep.id}>
+                  {rep.name}
                 </option>
               ))}
             </select>
@@ -362,18 +379,22 @@ export default function EstimatesPage() {
               <p className="card-subtitle">No sent or approved estimates available.</p>
             ) : (
               <ul className="list">
-                {approvalEstimates.slice(0, 5).map((estimate) => (
-                  <li key={estimate.id} className="list-item">
-                    <div>
-                      <div className="list-title">Estimate #{estimate.id}</div>
-                      <div className="list-meta">
-                        {customers.find((item) => item.id === estimate.customer_id)?.name ||
-                          `Customer #${estimate.customer_id}`}
+                {approvalEstimates.slice(0, 5).map((estimate) => {
+                  const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
+                  return (
+                    <li key={estimate.id} className="list-item">
+                      <div>
+                        <div className="list-title">Estimate #{estimate.id}</div>
+                        <div className="list-meta">
+                          {customers.find((item) => item.id === estimate.customer_id)?.name ||
+                            `Customer #${estimate.customer_id}`}
+                        </div>
+                        <div className="list-meta">{salesRep?.name || "Sales rep unassigned"}</div>
                       </div>
-                    </div>
-                    <StatusChip status={estimate.status} />
-                  </li>
-                ))}
+                      <StatusChip status={estimate.status} />
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -411,6 +432,7 @@ export default function EstimatesPage() {
               <tr>
                 <th>Estimate</th>
                 <th>Customer</th>
+                <th>Sales rep</th>
                 <th>Address</th>
                 <th>Total</th>
                 <th>Status</th>
@@ -420,10 +442,12 @@ export default function EstimatesPage() {
             <tbody>
               {estimates.map((estimate) => {
                 const customer = customers.find((item) => item.id === estimate.customer_id);
+                const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
                 return (
                   <tr key={estimate.id}>
                     <td>Estimate #{estimate.id}</td>
                     <td>{customer?.name || `Customer #${estimate.customer_id}`}</td>
+                    <td>{salesRep?.name || (estimate.sales_rep_id ? `Rep #${estimate.sales_rep_id}` : "-")}</td>
                     <td>{estimate.service_address || customer?.service_address || "-"}</td>
                     <td>${estimate.total}</td>
                     <td>

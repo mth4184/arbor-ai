@@ -68,6 +68,7 @@ class Estimate(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
     lead_id: Mapped[int | None] = mapped_column(ForeignKey("leads.id"), nullable=True)
+    sales_rep_id: Mapped[int | None] = mapped_column(ForeignKey("sales_reps.id"), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="draft")
     service_address: Mapped[str] = mapped_column(Text, default="")
     scope: Mapped[str] = mapped_column(Text, default="")
@@ -85,6 +86,7 @@ class Estimate(Base):
 
     customer = relationship("Customer", back_populates="estimates")
     lead = relationship("Lead", back_populates="estimates")
+    sales_rep = relationship("SalesRep", back_populates="estimates")
     line_items = relationship("EstimateLineItem", back_populates="estimate", cascade="all, delete-orphan")
     jobs = relationship("Job", back_populates="estimate")
 
@@ -130,6 +132,7 @@ class SalesRep(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     jobs = relationship("Job", back_populates="sales_rep")
+    estimates = relationship("Estimate", back_populates="sales_rep")
 
 
 class JobType(Base):

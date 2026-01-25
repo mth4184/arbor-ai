@@ -23,6 +23,7 @@ export default function EstimateDetailPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
+  const [salesReps, setSalesReps] = useState<any[]>([]);
   const [taxRate, setTaxRate] = useState(0);
   const [scheduleStart, setScheduleStart] = useState("");
   const [scheduleEnd, setScheduleEnd] = useState("");
@@ -31,10 +32,11 @@ export default function EstimateDetailPage() {
   const [attachmentCaption, setAttachmentCaption] = useState("");
 
   async function load() {
-    const [est, files, crewItems] = await Promise.all([
+    const [est, files, crewItems, salesRepItems] = await Promise.all([
       apiGet(`/estimates/${id}`),
       apiGet("/attachments", { entity_type: "estimate", entity_id: id }),
       apiGet("/crews"),
+      apiGet("/sales-reps"),
     ]);
     setEstimate(est);
     const items = est.line_items || [];
@@ -44,6 +46,7 @@ export default function EstimateDetailPage() {
     setTaxRate(Number(rate.toFixed(2)));
     setAttachments(files || []);
     setCrews(crewItems || []);
+    setSalesReps(salesRepItems || []);
     if (!crewId && crewItems.length) setCrewId(String(crewItems[0].id));
   }
 
@@ -156,6 +159,26 @@ export default function EstimateDetailPage() {
             <div className="field">
               <label className="label">Customer ID</label>
               <input className="input" value={estimate.customer_id} disabled />
+            </div>
+            <div className="field">
+              <label className="label">Sales rep</label>
+              <select
+                className="select"
+                value={estimate.sales_rep_id ?? ""}
+                onChange={(event) =>
+                  setEstimate({
+                    ...estimate,
+                    sales_rep_id: event.target.value ? Number(event.target.value) : null,
+                  })
+                }
+              >
+                <option value="">Unassigned</option>
+                {salesReps.map((rep) => (
+                  <option key={rep.id} value={rep.id}>
+                    {rep.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label className="label">Tax rate</label>
