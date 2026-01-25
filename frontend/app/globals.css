@@ -1182,6 +1182,23 @@ textarea {
   font-size: 11px;
 }
 
+.scorecard-title-input {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 12px;
+  color: var(--ink-900);
+  padding: 4px 6px;
+  border-radius: var(--radius-md);
+}
+
+.scorecard-title-input:focus {
+  outline: none;
+  border-color: var(--moss-600);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
 .scorecard-table th:last-child,
 .scorecard-table td:last-child {
   border-right: none;

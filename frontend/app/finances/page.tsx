@@ -237,6 +237,20 @@ export default function FinancesPage() {
     );
   }
 
+  function updateMetricTitle(groupId: string, metricId: string, title: string) {
+    setGroups((prev) =>
+      prev.map((group) => {
+        if (group.id !== groupId) return group;
+        return {
+          ...group,
+          metrics: group.metrics.map((metric) =>
+            metric.id === metricId ? { ...metric, title } : metric,
+          ),
+        };
+      }),
+    );
+  }
+
   function addMetric(groupId: string, name?: string) {
     const id = `metric-${Date.now()}`;
     const title = name?.trim() || "New metric";
@@ -458,7 +472,13 @@ export default function FinancesPage() {
                             }}
                           />
                         </td>
-                        <td>{metric.title}</td>
+                        <td>
+                          <input
+                            className="scorecard-title-input"
+                            value={metric.title}
+                            onChange={(event) => updateMetricTitle(group.id, metric.id, event.target.value)}
+                          />
+                        </td>
                         <td>{metric.goal ? formatMetricValue(metric, metric.goal) : "-"}</td>
                         <td>{formatMetricValue(metric, average(values))}</td>
                         <td>{formatMetricValue(metric, total(values))}</td>
