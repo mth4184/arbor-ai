@@ -323,7 +323,6 @@ export default function PlantInventoryPage() {
                   id="tree-lat"
                   className="input"
                   step="0.0001"
-                  allowZero
                   value={newTree.latitude}
                   onValueChange={(value) => setNewTree((prev) => ({ ...prev, latitude: value }))}
                 />
@@ -336,7 +335,6 @@ export default function PlantInventoryPage() {
                   id="tree-lng"
                   className="input"
                   step="0.0001"
-                  allowZero
                   value={newTree.longitude}
                   onValueChange={(value) => setNewTree((prev) => ({ ...prev, longitude: value }))}
                 />

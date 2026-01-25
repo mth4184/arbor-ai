@@ -442,16 +442,27 @@ export default function FinancesPage() {
                         <td>{metric.goal ? formatMetricValue(metric, metric.goal) : "-"}</td>
                         <td>{formatMetricValue(metric, average(values))}</td>
                         <td>{formatMetricValue(metric, total(values))}</td>
-                        {values.map((value, idx) => (
-                          <td key={`${metric.id}-${idx}`} className={valueClass(value, metric.goal)}>
-                            <input
-                              className="scorecell-input"
-                              type="number"
-                              value={value}
-                              onChange={(e) => updateMetricValue(group.id, metric.id, idx, Number(e.target.value))}
-                            />
-                          </td>
-                        ))}
+                        {values.map((value, idx) => {
+                          const displayValue = value === 0 ? "" : value;
+                          return (
+                            <td key={`${metric.id}-${idx}`} className={valueClass(value, metric.goal)}>
+                              <input
+                                className="scorecell-input"
+                                type="number"
+                                value={displayValue}
+                                onChange={(e) => {
+                                  const nextValue = e.target.value;
+                                  updateMetricValue(
+                                    group.id,
+                                    metric.id,
+                                    idx,
+                                    nextValue === "" ? 0 : Number(nextValue),
+                                  );
+                                }}
+                              />
+                            </td>
+                          );
+                        })}
                       </tr>
                     );
                   })}

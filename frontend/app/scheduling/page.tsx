@@ -413,7 +413,6 @@ export default function SchedulingPage() {
                   id="job-lat"
                   className="input"
                   step="0.0001"
-                  allowZero
                   value={newJob.latitude}
                   onValueChange={(value) => setNewJob((prev) => ({ ...prev, latitude: value }))}
                 />
@@ -426,7 +425,6 @@ export default function SchedulingPage() {
                   id="job-lng"
                   className="input"
                   step="0.0001"
-                  allowZero
                   value={newJob.longitude}
                   onValueChange={(value) => setNewJob((prev) => ({ ...prev, longitude: value }))}
                 />

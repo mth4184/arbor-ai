@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiGet, apiPost } from "../api";
+import NumberInput from "../components/NumberInput";
 
 const emptyForm = {
   name: "",
@@ -391,14 +392,11 @@ export default function CustomersPage() {
               </div>
               <div className="field">
                 <label className="label">Cadence (days)</label>
-                <input
+                <NumberInput
                   className="input"
-                  type="number"
                   min={1}
                   value={followUpForm.cadenceDays}
-                  onChange={(e) =>
-                    setFollowUpForm({ ...followUpForm, cadenceDays: Number(e.target.value) || 1 })
-                  }
+                  onValueChange={(value) => setFollowUpForm({ ...followUpForm, cadenceDays: value })}
                 />
               </div>
               <div className="field">
