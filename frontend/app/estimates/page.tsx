@@ -330,13 +330,17 @@ export default function EstimatesPage() {
                 value={selectedEstimateId}
                 onChange={(e) => setSelectedEstimateId(e.target.value)}
               >
-                {approvalEstimates.map((estimate) => (
-                  <option key={estimate.id} value={estimate.id}>
-                  Estimate #{estimate.id} ·{" "}
-                  {customers.find((item) => item.id === estimate.customer_id)?.name ||
-                    `Customer #${estimate.customer_id}`}
-                  </option>
-                ))}
+                {approvalEstimates.map((estimate) => {
+                  const customerName =
+                    customers.find((item) => item.id === estimate.customer_id)?.name ||
+                    `Customer #${estimate.customer_id}`;
+                  const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
+                  return (
+                    <option key={estimate.id} value={estimate.id}>
+                      Estimate #{estimate.id} · {customerName} · {salesRep?.name || "Sales rep unassigned"}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div className="field">
@@ -378,24 +382,34 @@ export default function EstimatesPage() {
             {approvalEstimates.length === 0 ? (
               <p className="card-subtitle">No sent or approved estimates available.</p>
             ) : (
-              <ul className="list">
-                {approvalEstimates.slice(0, 5).map((estimate) => {
-                  const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
-                  return (
-                    <li key={estimate.id} className="list-item">
-                      <div>
-                        <div className="list-title">Estimate #{estimate.id}</div>
-                        <div className="list-meta">
+              <table className="table section">
+                <thead>
+                  <tr>
+                    <th>Estimate</th>
+                    <th>Customer</th>
+                    <th>Sales rep</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {approvalEstimates.slice(0, 5).map((estimate) => {
+                    const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
+                    return (
+                      <tr key={estimate.id}>
+                        <td>Estimate #{estimate.id}</td>
+                        <td>
                           {customers.find((item) => item.id === estimate.customer_id)?.name ||
                             `Customer #${estimate.customer_id}`}
-                        </div>
-                        <div className="list-meta">{salesRep?.name || "Sales rep unassigned"}</div>
-                      </div>
-                      <StatusChip status={estimate.status} />
-                    </li>
-                  );
-                })}
-              </ul>
+                        </td>
+                        <td>{salesRep?.name || "Sales rep unassigned"}</td>
+                        <td>
+                          <StatusChip status={estimate.status} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
         </section>
