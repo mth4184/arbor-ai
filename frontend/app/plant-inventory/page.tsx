@@ -1,6 +1,5 @@
 "use client";
 
-import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import NumberInput from "../components/NumberInput";
 
