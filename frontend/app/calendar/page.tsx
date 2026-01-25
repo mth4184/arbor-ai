@@ -21,6 +21,23 @@ function startOfMonth(date: Date) {
   return start;
 }
 
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateTime(date: Date, endOfDay = false) {
+  return `${formatLocalDate(date)}T${endOfDay ? "23:59:59" : "00:00:00"}`;
+}
+
+function dateKey(value?: string) {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  return "";
+}
+
 export default function CalendarPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date()));
@@ -78,8 +95,8 @@ export default function CalendarPage() {
 
   async function loadCalendar(rangeStart: Date, rangeEnd: Date) {
     const calendarJobs = await apiGet("/calendar", {
-      start: rangeStart.toISOString(),
-      end: rangeEnd.toISOString(),
+      start: formatDateTime(rangeStart),
+      end: formatDateTime(rangeEnd, true),
     });
     setJobs(Array.isArray(calendarJobs) ? calendarJobs : []);
   }
@@ -87,12 +104,13 @@ export default function CalendarPage() {
   useEffect(() => {
     if (view === "week") {
       const end = new Date(weekStart);
-      end.setDate(weekStart.getDate() + 7);
+      end.setDate(weekStart.getDate() + 6);
       loadCalendar(weekStart, end);
     } else {
       const monthStart = startOfMonth(selectedMonth);
       const monthEnd = new Date(monthStart);
       monthEnd.setMonth(monthStart.getMonth() + 1);
+      monthEnd.setDate(0);
       loadCalendar(monthStart, monthEnd);
     }
     loadOpenJobs();
@@ -111,16 +129,17 @@ export default function CalendarPage() {
   }
 
   async function assignJob(jobId: number, date: Date) {
-    await apiPut(`/jobs/${jobId}`, { scheduled_start: `${date.toISOString().slice(0, 10)}T00:00:00` });
+    await apiPut(`/jobs/${jobId}`, { scheduled_start: formatDateTime(date) });
     await loadOpenJobs();
     if (view === "week") {
       const end = new Date(weekStart);
-      end.setDate(weekStart.getDate() + 7);
+      end.setDate(weekStart.getDate() + 6);
       await loadCalendar(weekStart, end);
     } else {
       const monthStart = startOfMonth(selectedMonth);
       const monthEnd = new Date(monthStart);
       monthEnd.setMonth(monthStart.getMonth() + 1);
+      monthEnd.setDate(0);
       await loadCalendar(monthStart, monthEnd);
     }
   }
@@ -212,10 +231,10 @@ export default function CalendarPage() {
           </div>
           <div className="panel-grid">
             {weekDays.map((day) => {
-              const dayKey = day.toDateString();
+              const dayKey = formatLocalDate(day);
               const dayJobs = jobs.filter((job) => {
                 if (!job.scheduled_start) return false;
-                return new Date(job.scheduled_start).toDateString() === dayKey;
+                return dateKey(job.scheduled_start) === dayKey;
               });
               return (
                 <div
@@ -281,10 +300,10 @@ export default function CalendarPage() {
             ))}
             {monthDays.map((day) => {
               const isCurrentMonth = day.getMonth() === selectedMonth.getMonth();
-              const dayKey = day.toDateString();
+              const dayKey = formatLocalDate(day);
               const dayJobs = jobs.filter((job) => {
                 if (!job.scheduled_start) return false;
-                return new Date(job.scheduled_start).toDateString() === dayKey;
+                return dateKey(job.scheduled_start) === dayKey;
               });
               return (
                 <div
