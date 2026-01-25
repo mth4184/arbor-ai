@@ -176,26 +176,28 @@ export default function EstimatesPage() {
           </div>
         </div>
         <div className="form-grid">
-          <div className="field">
-            <label className="label">Customer</label>
-            <select className="select" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label className="label">Sales rep</label>
-            <select className="select" value={salesRepId} onChange={(e) => setSalesRepId(e.target.value)}>
-              <option value="">Unassigned</option>
-              {salesReps.map((rep) => (
-                <option key={rep.id} value={rep.id}>
-                  {rep.name}
-                </option>
-              ))}
-            </select>
+          <div className="form-row">
+            <div className="field">
+              <label className="label">Customer</label>
+              <select className="select" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label className="label">Sales rep</label>
+              <select className="select" value={salesRepId} onChange={(e) => setSalesRepId(e.target.value)}>
+                <option value="">Unassigned</option>
+                {salesReps.map((rep) => (
+                  <option key={rep.id} value={rep.id}>
+                    {rep.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="field">
             <label className="label">Status</label>
