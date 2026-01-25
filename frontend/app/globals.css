@@ -751,6 +751,20 @@ textarea {
   flex-wrap: wrap;
 }
 
+.list-item-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  color: inherit;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.list-item-link:hover {
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
 .list-title {
   font-weight: 600;
   color: var(--forest-900);

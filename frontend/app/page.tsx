@@ -163,21 +163,42 @@ export default function Home() {
               .slice(0, 5)
               .map((invoice) => {
                 const customer = customers.find((item) => item.id === invoice.customer_id);
+                const customerId = invoice.customer_id || customer?.id;
                 return (
-                  <li className="list-item" key={invoice.id}>
-                    <div>
-                      <div className="list-title">{customer?.name || "Client"}</div>
-                      <div className="list-meta">
-                        {invoice.service_address || customer?.service_address || "-"}
+                  <li key={invoice.id}>
+                    {customerId ? (
+                      <Link className="list-item list-item-link" href={`/customers/${customerId}`}>
+                        <div>
+                          <div className="list-title">{customer?.name || "Client"}</div>
+                          <div className="list-meta">
+                            {invoice.service_address || customer?.service_address || "-"}
+                          </div>
+                        </div>
+                        <div className="table-actions">
+                          <span className="list-meta">
+                            {invoice.issued_at ? String(invoice.issued_at).slice(0, 10) : "No date"}
+                          </span>
+                          <span className="list-meta">${invoice.total} due</span>
+                          <StatusChip status={invoice.status} />
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="list-item">
+                        <div>
+                          <div className="list-title">{customer?.name || "Client"}</div>
+                          <div className="list-meta">
+                            {invoice.service_address || customer?.service_address || "-"}
+                          </div>
+                        </div>
+                        <div className="table-actions">
+                          <span className="list-meta">
+                            {invoice.issued_at ? String(invoice.issued_at).slice(0, 10) : "No date"}
+                          </span>
+                          <span className="list-meta">${invoice.total} due</span>
+                          <StatusChip status={invoice.status} />
+                        </div>
                       </div>
-                    </div>
-                    <div className="table-actions">
-                      <span className="list-meta">
-                        {invoice.issued_at ? String(invoice.issued_at).slice(0, 10) : "No date"}
-                      </span>
-                      <span className="list-meta">${invoice.total} due</span>
-                      <StatusChip status={invoice.status} />
-                    </div>
+                    )}
                   </li>
                 );
               })}
