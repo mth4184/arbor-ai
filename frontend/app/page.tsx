@@ -168,11 +168,13 @@ export default function Home() {
                     <div>
                       <div className="list-title">{customer?.name || "Client"}</div>
                       <div className="list-meta">
-                        {invoice.service_address || customer?.service_address || "-"} ·{" "}
-                        {invoice.issued_at ? String(invoice.issued_at).slice(0, 10) : "No date"}
+                        {invoice.service_address || customer?.service_address || "-"}
                       </div>
                     </div>
                     <div className="table-actions">
+                      <span className="list-meta">
+                        {invoice.issued_at ? String(invoice.issued_at).slice(0, 10) : "No date"}
+                      </span>
                       <span className="list-meta">${invoice.total} due</span>
                       <StatusChip status={invoice.status} />
                     </div>
