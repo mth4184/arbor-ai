@@ -546,6 +546,34 @@ textarea {
   color: var(--ink-700);
 }
 
+.followup-layout {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.followup-list {
+  gap: 12px;
+}
+
+.followup-item {
+  align-items: flex-start;
+}
+
+.followup-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ink-700);
+}
+
+.followup-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .scheduling-layout {
   display: grid;
   gap: 20px;
@@ -1260,6 +1288,10 @@ textarea {
 
   .inventory-map {
     height: 360px;
+  }
+
+  .followup-layout {
+    grid-template-columns: 1fr;
   }
 
   .scheduling-layout {
