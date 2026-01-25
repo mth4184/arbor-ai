@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 type ViewMode = "weekly" | "monthly" | "quarterly" | "annual";
 
@@ -351,7 +352,9 @@ export default function FinancesPage() {
             <button className="btn btn-secondary" onClick={addGroup}>
               New group
             </button>
-            <button className="btn btn-ghost">Go to Measurable Manager</button>
+            <Link className="btn btn-ghost" href="/measurable-manager">
+              Go to Measurable Manager
+            </Link>
             <div className="scorecard-menu">
               <button className="btn btn-ghost" onClick={() => setMenuOpen(menuOpen ? null : "menu")}>
                 ⋯
