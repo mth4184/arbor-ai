@@ -140,6 +140,18 @@ export default function CalendarPage() {
     }
   }
 
+  function setDragData(event: any, jobId: number) {
+    event.dataTransfer.setData("text/plain", String(jobId));
+    event.dataTransfer.setData("application/x-job-id", String(jobId));
+    event.dataTransfer.effectAllowed = "move";
+  }
+
+  function getDragJobId(event: any) {
+    const text = event.dataTransfer.getData("application/x-job-id") || event.dataTransfer.getData("text/plain");
+    const parsed = Number(text);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
   return (
     <main className="page">
       <header className="page-header">
@@ -209,9 +221,14 @@ export default function CalendarPage() {
                 <div
                   key={dayKey}
                   className="panel calendar-drop"
-                  onDragOver={(event) => event.preventDefault()}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
                   onDrop={(event) => {
-                    const jobId = Number(event.dataTransfer.getData("text/plain"));
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const jobId = getDragJobId(event);
                     if (jobId) assignJob(jobId, day);
                   }}
                 >
@@ -222,7 +239,12 @@ export default function CalendarPage() {
                   ) : (
                     <ul className="list section">
                       {dayJobs.map((job) => (
-                        <li key={job.id} className="list-item">
+                        <li
+                          key={job.id}
+                          className="list-item"
+                          draggable
+                          onDragStart={(event) => setDragData(event, job.id)}
+                        >
                           <div>
                             <div className="list-title">Job #{job.id}</div>
                             <div className="list-meta">Crew #{job.crew_id ?? "TBD"}</div>
@@ -268,15 +290,25 @@ export default function CalendarPage() {
                 <div
                   key={dayKey}
                   className={`calendar-day calendar-drop ${isCurrentMonth ? "" : "calendar-day-muted"}`}
-                  onDragOver={(event) => event.preventDefault()}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
                   onDrop={(event) => {
-                    const jobId = Number(event.dataTransfer.getData("text/plain"));
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const jobId = getDragJobId(event);
                     if (jobId) assignJob(jobId, day);
                   }}
                 >
                   <div className="calendar-day-number">{day.getDate()}</div>
                   {dayJobs.slice(0, 3).map((job) => (
-                    <div key={job.id} className="calendar-job">
+                    <div
+                      key={job.id}
+                      className="calendar-job"
+                      draggable
+                      onDragStart={(event) => setDragData(event, job.id)}
+                    >
                       <span>Job #{job.id}</span>
                       <StatusChip status={job.status} />
                     </div>
@@ -300,9 +332,14 @@ export default function CalendarPage() {
         </div>
         <div
           className="drag-list"
-          onDragOver={(event) => event.preventDefault()}
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
           onDrop={(event) => {
-            const jobId = Number(event.dataTransfer.getData("text/plain"));
+            event.preventDefault();
+            event.stopPropagation();
+            const jobId = getDragJobId(event);
             if (jobId) unscheduleJob(jobId);
           }}
         >
@@ -315,7 +352,7 @@ export default function CalendarPage() {
                 className="drag-card"
                 draggable
                 onDragStart={(event) => {
-                  event.dataTransfer.setData("text/plain", String(job.id));
+                  setDragData(event, job.id);
                 }}
               >
                 <div>
