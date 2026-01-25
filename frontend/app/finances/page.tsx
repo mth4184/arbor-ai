@@ -434,8 +434,11 @@ export default function FinancesPage() {
                             <input
                               className="scorecell-input"
                               type="number"
-                              value={value}
-                              onChange={(e) => updateMetricValue(group.id, metric.id, idx, Number(e.target.value))}
+                              value={value === 0 ? "" : value}
+                              onChange={(e) => {
+                                const next = e.target.value;
+                                updateMetricValue(group.id, metric.id, idx, next === "" ? 0 : Number(next));
+                              }}
                             />
                           </td>
                         ))}
