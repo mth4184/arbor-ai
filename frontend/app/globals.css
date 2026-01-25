@@ -765,6 +765,79 @@ textarea {
   transform: translateY(-1px);
 }
 
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.calendar-day {
+  border: 1px solid var(--sage-200);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  min-height: 120px;
+  background: #fff;
+}
+
+.calendar-day-header {
+  background: var(--sage-100);
+  font-weight: 700;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.calendar-day-muted {
+  opacity: 0.45;
+}
+
+.calendar-day-number {
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.calendar-job {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: var(--cream-100);
+  margin-bottom: 4px;
+}
+
+.drag-list {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.drag-card {
+  background: #fff;
+  border: 1px solid var(--sage-200);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  cursor: grab;
+}
+
+.drag-card:active {
+  cursor: grabbing;
+}
+
+.calendar-drop {
+  transition: box-shadow 0.2s ease;
+}
+
+.calendar-drop:hover {
+  box-shadow: var(--shadow-soft);
+}
+
 .list-title {
   font-weight: 600;
   color: var(--forest-900);
