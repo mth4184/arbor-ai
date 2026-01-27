@@ -47,7 +47,6 @@ const INITIAL_JOBS: JobStop[] = [
 ];
 
 export default function SchedulingPage() {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const [jobs, setJobs] = useState<JobStop[]>(INITIAL_JOBS);
   const [selectedId, setSelectedId] = useState<string | null>(INITIAL_JOBS[0]?.id ?? null);
   const [crew, setCrew] = useState("Crew A");
@@ -68,23 +67,23 @@ export default function SchedulingPage() {
 
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
-  const directionsServiceRef = useRef<any>(null);
-  const directionsRendererRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
   const markerByIdRef = useRef<Map<string, any>>(new Map());
-  const infoWindowRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
+  const markerLayerRef = useRef<any>(null);
+  const routeLineRef = useRef<any>(null);
+  const markerIconRef = useRef<any>(null);
 
   const mapMessage = useMemo(() => {
-    if (!apiKey) {
-      return "Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to enable the route planner.";
-    }
     if (mapError) {
-      return "Google Maps failed to load. Check your API key and network.";
+      return "OpenStreetMap failed to load. Please refresh and try again.";
+    }
+    if (!mapReady) {
+      return "Loading map...";
     }
     return "";
-  }, [apiKey, mapError]);
+  }, [mapError, mapReady]);
 
-  const mapStatusLabel = apiKey ? "Google maps enabled" : "Google maps key needed";
+  const mapStatusLabel = mapError ? "Map unavailable" : mapReady ? "OpenStreetMap live" : "Loading map";
   const stopCount = `${jobs.length} ${jobs.length === 1 ? "stop" : "stops"}`;
 
   const orderedJobs = useMemo(() => {
@@ -101,104 +100,114 @@ export default function SchedulingPage() {
     Math.abs(newJob.longitude) <= 180;
 
   useEffect(() => {
-    if (!apiKey) return;
     if (typeof window === "undefined") return;
-    if ((window as any).google?.maps) {
-      setMapReady(true);
-      return;
+    let mounted = true;
+    async function initMap() {
+      if (!mapRef.current || mapInstanceRef.current) return;
+      try {
+        const imported = await import("leaflet");
+        const L = imported.default ?? imported;
+        if (!mounted || !mapRef.current) return;
+        leafletRef.current = L;
+        const map = L.map(mapRef.current, { zoomControl: true }).setView(
+          [BASE_LOCATION.latitude, BASE_LOCATION.longitude],
+          12,
+        );
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+        markerLayerRef.current = L.layerGroup().addTo(map);
+        markerIconRef.current = L.icon({
+          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+        mapInstanceRef.current = map;
+        setMapReady(true);
+        setTimeout(() => map.invalidateSize(), 0);
+      } catch (error) {
+        setMapError("load");
+      }
     }
-    const existing = document.querySelector<HTMLScriptElement>('script[data-google-maps="true"]');
-    if (existing) {
-      existing.addEventListener("load", () => setMapReady(true));
-      existing.addEventListener("error", () => setMapError("load"));
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
-    script.async = true;
-    script.defer = true;
-    script.dataset.googleMaps = "true";
-    script.onload = () => setMapReady(true);
-    script.onerror = () => setMapError("load");
-    document.head.appendChild(script);
-  }, [apiKey]);
+    initMap();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-    if (!mapInstanceRef.current && (window as any).google?.maps) {
-      mapInstanceRef.current = new (window as any).google.maps.Map(mapRef.current, {
-        center: { lat: BASE_LOCATION.latitude, lng: BASE_LOCATION.longitude },
-        zoom: 12,
-        mapTypeControl: false,
-        fullscreenControl: false,
-        streetViewControl: false,
-      });
-      directionsServiceRef.current = new (window as any).google.maps.DirectionsService();
-      directionsRendererRef.current = new (window as any).google.maps.DirectionsRenderer({
-        map: mapInstanceRef.current,
-        suppressMarkers: true,
-        preserveViewport: true,
-      });
-      infoWindowRef.current = new (window as any).google.maps.InfoWindow();
-    }
-  }, [mapReady]);
-
-  const planRoute = useCallback(() => {
-    if (!mapReady || !directionsServiceRef.current || !directionsRendererRef.current) return;
+  const planRoute = useCallback(async () => {
+    if (!mapReady || !mapInstanceRef.current || !leafletRef.current) return;
     const map = mapInstanceRef.current;
+    const L = leafletRef.current;
     if (!jobs.length) {
-      directionsRendererRef.current.set("directions", null);
+      if (routeLineRef.current) {
+        routeLineRef.current.remove();
+        routeLineRef.current = null;
+      }
       setRouteInfo(null);
       setRouteOrder([]);
       setRouteError(null);
       if (map) {
-        map.setCenter({ lat: BASE_LOCATION.latitude, lng: BASE_LOCATION.longitude });
-        map.setZoom(12);
+        map.setView([BASE_LOCATION.latitude, BASE_LOCATION.longitude], 12);
       }
       return;
     }
-    const waypoints = jobs.map((job) => ({
-      location: { lat: job.latitude, lng: job.longitude },
-      stopover: true,
-    }));
-    directionsServiceRef.current.route(
-      {
-        origin: { lat: BASE_LOCATION.latitude, lng: BASE_LOCATION.longitude },
-        destination: { lat: BASE_LOCATION.latitude, lng: BASE_LOCATION.longitude },
-        waypoints,
-        optimizeWaypoints: optimizeRoute,
-        travelMode: (window as any).google.maps.TravelMode.DRIVING,
-      },
-      (result: any, status: string) => {
-        if (status === "OK" && result) {
-          directionsRendererRef.current.setDirections(result);
-          const route = result.routes?.[0];
-          const legs = route?.legs ?? [];
-          const totals = legs.reduce(
-            (acc: { distance: number; duration: number }, leg: any) => {
-              acc.distance += leg.distance?.value ?? 0;
-              acc.duration += leg.duration?.value ?? 0;
-              return acc;
-            },
-            { distance: 0, duration: 0 },
-          );
-          setRouteInfo({
-            distance: `${(totals.distance / 1000).toFixed(1)} km`,
-            duration: `${Math.round(totals.duration / 60)} mins`,
-          });
-          setRouteOrder(route?.waypoint_order ?? []);
-          setRouteError(null);
-          if (route?.bounds && map) {
-            map.fitBounds(route.bounds);
-          }
-        } else {
-          directionsRendererRef.current.set("directions", null);
-          setRouteInfo(null);
-          setRouteOrder([]);
-          setRouteError("Route unavailable for current stops.");
-        }
-      },
-    );
+    const coords = [
+      { latitude: BASE_LOCATION.latitude, longitude: BASE_LOCATION.longitude },
+      ...jobs,
+      { latitude: BASE_LOCATION.latitude, longitude: BASE_LOCATION.longitude },
+    ]
+      .map((point) => `${point.longitude},${point.latitude}`)
+      .join(";");
+    const useOptimize = optimizeRoute && jobs.length > 1;
+    const url = useOptimize
+      ? `https://router.project-osrm.org/trip/v1/driving/${coords}?roundtrip=true&source=first&destination=last&overview=full&geometries=geojson`
+      : `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+    try {
+      setRouteError(null);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("route");
+      const data = await response.json();
+      const route = useOptimize ? data.trips?.[0] : data.routes?.[0];
+      if (!route?.geometry?.coordinates) throw new Error("route");
+      if (routeLineRef.current) {
+        routeLineRef.current.remove();
+      }
+      routeLineRef.current = L.polyline(
+        route.geometry.coordinates.map(([lon, lat]: [number, number]) => [lat, lon]),
+        { color: "#2f6f4c", weight: 4, opacity: 0.9 },
+      ).addTo(map);
+      map.fitBounds(routeLineRef.current.getBounds(), { padding: [24, 24] });
+      setRouteInfo({
+        distance: `${(route.distance / 1000).toFixed(1)} km`,
+        duration: `${Math.round(route.duration / 60)} mins`,
+      });
+      if (useOptimize && Array.isArray(route.waypoint_order)) {
+        const rawOrder: number[] = route.waypoint_order;
+        const maxIndex = rawOrder.length ? Math.max(...rawOrder) : -1;
+        const normalized =
+          maxIndex >= jobs.length
+            ? rawOrder
+                .filter((index) => index > 0 && index <= jobs.length)
+                .map((index) => index - 1)
+            : rawOrder;
+        setRouteOrder(normalized.filter((index) => index >= 0 && index < jobs.length));
+      } else {
+        setRouteOrder([]);
+      }
+    } catch (error) {
+      if (routeLineRef.current) {
+        routeLineRef.current.remove();
+        routeLineRef.current = null;
+      }
+      setRouteInfo(null);
+      setRouteOrder([]);
+      setRouteError("Route unavailable for current stops.");
+    }
   }, [jobs, mapReady, optimizeRoute]);
 
   useEffect(() => {
@@ -208,49 +217,50 @@ export default function SchedulingPage() {
   }, [mapReady, planRoute]);
 
   useEffect(() => {
-    if (!mapReady || !mapInstanceRef.current || !(window as any).google?.maps) return;
-    const markerMap = new Map<string, any>();
-    markersRef.current.forEach((marker) => marker.setMap(null));
+    if (!mapReady || !mapInstanceRef.current || !leafletRef.current || !markerLayerRef.current) return;
+    const L = leafletRef.current;
     const map = mapInstanceRef.current;
+    markerLayerRef.current.clearLayers();
+    const markerMap = new Map<string, any>();
     const orderLookup = new Map<number, number>();
     if (optimizeRoute && routeOrder.length === jobs.length) {
       routeOrder.forEach((idx, orderIdx) => orderLookup.set(idx, orderIdx + 1));
     }
     jobs.forEach((job, index) => {
       const order = orderLookup.get(index) ?? index + 1;
-      const marker = new (window as any).google.maps.Marker({
-        position: { lat: job.latitude, lng: job.longitude },
-        map,
-        label: String(order),
+      const marker = L.marker([job.latitude, job.longitude], {
+        icon: markerIconRef.current ?? undefined,
         title: `${job.customer} (${job.address})`,
+      })
+        .addTo(markerLayerRef.current)
+        .on("click", () => setSelectedId(job.id));
+      marker.bindTooltip(String(order), {
+        permanent: true,
+        direction: "top",
+        className: "route-marker-label",
       });
-      marker.addListener("click", () => setSelectedId(job.id));
+      marker.bindPopup(`<strong>${job.customer}</strong><br/>${job.address}`);
       markerMap.set(job.id, marker);
     });
-    const baseMarker = new (window as any).google.maps.Marker({
-      position: { lat: BASE_LOCATION.latitude, lng: BASE_LOCATION.longitude },
-      map,
-      label: "HQ",
+    const baseMarker = L.marker([BASE_LOCATION.latitude, BASE_LOCATION.longitude], {
+      icon: markerIconRef.current ?? undefined,
       title: BASE_LOCATION.name,
-    });
-    markersRef.current = [...markerMap.values(), baseMarker];
+    }).addTo(markerLayerRef.current);
+    baseMarker.bindTooltip("HQ", { permanent: true, direction: "top", className: "route-marker-label" });
     markerByIdRef.current = markerMap;
+    if (!routeLineRef.current) {
+      map.setView([BASE_LOCATION.latitude, BASE_LOCATION.longitude], 12);
+    }
   }, [jobs, mapReady, optimizeRoute, routeOrder]);
 
   useEffect(() => {
-    if (!selectedId || !mapInstanceRef.current || !(window as any).google?.maps) return;
+    if (!selectedId || !mapInstanceRef.current) return;
     const selected = jobs.find((job) => job.id === selectedId);
     if (!selected) return;
     const map = mapInstanceRef.current;
     const marker = markerByIdRef.current.get(selected.id);
-    map.panTo({ lat: selected.latitude, lng: selected.longitude });
-    map.setZoom(14);
-    if (infoWindowRef.current && marker) {
-      infoWindowRef.current.setContent(
-        `<div style="font-weight:600;">${selected.customer}</div><div style="font-size:12px;">${selected.address}</div>`,
-      );
-      infoWindowRef.current.open(map, marker);
-    }
+    map.setView([selected.latitude, selected.longitude], 14);
+    if (marker) marker.openPopup();
   }, [selectedId, jobs]);
 
   function handleAddJob(event: FormEvent<HTMLFormElement>) {
@@ -279,7 +289,7 @@ export default function SchedulingPage() {
         <div>
           <p className="eyebrow">Scheduling</p>
           <h2 className="page-title">Route planner</h2>
-          <p className="page-subtitle">Optimize routes and visualize geospatial client jobs.</p>
+          <p className="page-subtitle">Optimize routes and visualize geospatial client jobs with OpenStreetMap.</p>
         </div>
         <div className="filters">
           <input className="input" type="date" value={date} onChange={(event) => setDate(event.target.value)} />

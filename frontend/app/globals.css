@@ -620,6 +620,17 @@ textarea {
   color: var(--ink-700);
 }
 
+.route-marker-label {
+  background: #fff;
+  border: 1px solid var(--sage-200);
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: var(--forest-900);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: var(--shadow-soft);
+}
+
 .route-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
