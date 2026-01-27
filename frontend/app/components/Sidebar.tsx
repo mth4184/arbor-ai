@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { href: "/scheduling", label: "Scheduling" },
   { href: "/invoices", label: "Invoices" },
   { href: "/finances", label: "Finances" },
-  { href: "/crews", label: "Crews" },
   { href: "/equipment", label: "Equipment" },
   { href: "/plant-inventory", label: "Plant Inventory" },
   { href: "/reports", label: "Reports" },
