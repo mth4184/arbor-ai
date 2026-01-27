@@ -44,6 +44,8 @@ export default function CalendarPage() {
   const [openJobs, setOpenJobs] = useState<any[]>([]);
   const [view, setView] = useState<"week" | "month">("week");
   const [monthOffset, setMonthOffset] = useState(0);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [jobTypes, setJobTypes] = useState<any[]>([]);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, idx) => {
@@ -93,6 +95,12 @@ export default function CalendarPage() {
     setOpenJobs(openList.filter((job) => !job.scheduled_start));
   }
 
+  async function loadReferenceData() {
+    const [customerItems, jobTypeItems] = await Promise.all([apiGet("/customers"), apiGet("/job-types")]);
+    setCustomers(Array.isArray(customerItems) ? customerItems : []);
+    setJobTypes(Array.isArray(jobTypeItems) ? jobTypeItems : []);
+  }
+
   async function loadCalendar(rangeStart: Date, rangeEnd: Date) {
     const calendarJobs = await apiGet("/calendar", {
       start: formatDateTime(rangeStart),
@@ -100,6 +108,10 @@ export default function CalendarPage() {
     });
     setJobs(Array.isArray(calendarJobs) ? calendarJobs : []);
   }
+
+  useEffect(() => {
+    loadReferenceData();
+  }, []);
 
   useEffect(() => {
     if (view === "week") {
@@ -321,17 +333,28 @@ export default function CalendarPage() {
                   }}
                 >
                   <div className="calendar-day-number">{day.getDate()}</div>
-                  {dayJobs.slice(0, 3).map((job) => (
-                    <div
-                      key={job.id}
-                      className="calendar-job"
-                      draggable
-                      onDragStart={(event) => setDragData(event, job.id)}
-                    >
-                      <span>Job #{job.id}</span>
-                      <StatusChip status={job.status} />
-                    </div>
-                  ))}
+                  {dayJobs.slice(0, 3).map((job) => {
+                    const customer = customers.find((item) => item.id === job.customer_id);
+                    const jobType = jobTypes.find((type) => type.id === job.job_type_id);
+                    const address = job.service_address || customer?.service_address || "-";
+                    return (
+                      <div
+                        key={job.id}
+                        className="calendar-job"
+                        draggable
+                        onDragStart={(event) => setDragData(event, job.id)}
+                      >
+                        <div className="calendar-job-main">
+                          <div className="calendar-job-title">
+                            {customer?.name || `Customer #${job.customer_id}`}
+                          </div>
+                          <div className="calendar-job-meta">{address}</div>
+                          <div className="calendar-job-meta">{jobType?.name || "Job type TBD"}</div>
+                        </div>
+                        <StatusChip status={job.status} />
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
