@@ -57,7 +57,7 @@ export default function Home() {
         crewItems,
       ] = await Promise.all([
         apiGet("/dashboard"),
-        apiGet("/jobs", { start: isoWeekStart, end: isoWeekEnd }),
+        apiGet("/calendar", { start: isoWeekStart, end: isoWeekEnd }),
         apiGet("/jobs", { start: isoTomorrow }),
         apiGet("/estimates", { status: "draft" }),
         apiGet("/estimates", { status: "sent" }),
