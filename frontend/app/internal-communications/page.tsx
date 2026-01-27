@@ -119,6 +119,45 @@ export default function InternalCommunicationsPage() {
           </div>
         </div>
       </section>
+
+      <section className="card section">
+        <div className="card-header">
+          <div>
+            <div className="card-title">Performance review updates</div>
+            <p className="card-subtitle">Structured communication for quarterly and annual reviews.</p>
+          </div>
+          <span className="badge">Performance</span>
+        </div>
+        <div className="list">
+          <div className="list-item">
+            <div>
+              <div className="list-title">Quarterly performance summary</div>
+              <div className="list-meta">
+                Summarize goals met, key wins, and areas for development.
+              </div>
+            </div>
+            <button className="btn btn-secondary">Use</button>
+          </div>
+          <div className="list-item">
+            <div>
+              <div className="list-title">Annual review kickoff</div>
+              <div className="list-meta">
+                Outline timelines, expectations, and requested documentation.
+              </div>
+            </div>
+            <button className="btn btn-secondary">Use</button>
+          </div>
+          <div className="list-item">
+            <div>
+              <div className="list-title">Performance improvement plan</div>
+              <div className="list-meta">
+                Provide support steps, targets, and follow-up cadence.
+              </div>
+            </div>
+            <button className="btn btn-secondary">Use</button>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
