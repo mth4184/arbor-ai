@@ -16,8 +16,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <div className="topbar-title">Operations Hub</div>
               </div>
               <div className="header-actions">
-                <span className="header-pill">Dispatch ready</span>
-                <span className="header-pill">Winter prep</span>
                 <Link className="header-pill header-pill-link" href="/internal-communications">
                   Internal communications
                 </Link>
