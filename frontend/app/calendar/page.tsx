@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { apiGet, apiPut } from "../api";
 import StatusChip from "../components/StatusChip";
 
@@ -29,15 +28,6 @@ function formatLocalDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function parseDateParam(value: string | null) {
-  if (!value) return null;
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return null;
-  const date = new Date(year, month - 1, day);
-  if (Number.isNaN(date.getTime())) return null;
-  return date;
-}
-
 function formatDateTime(date: Date, endOfDay = false) {
   return `${formatLocalDate(date)}T${endOfDay ? "23:59:59" : "00:00:00"}`;
 }
@@ -49,8 +39,6 @@ function dateKey(value?: string) {
 }
 
 export default function CalendarPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<any[]>([]);
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date()));
   const [openJobs, setOpenJobs] = useState<any[]>([]);
@@ -58,7 +46,6 @@ export default function CalendarPage() {
   const [monthOffset, setMonthOffset] = useState(0);
   const [customers, setCustomers] = useState<any[]>([]);
   const [jobTypes, setJobTypes] = useState<any[]>([]);
-  const weekParam = searchParams.get("week");
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, idx) => {
@@ -125,24 +112,6 @@ export default function CalendarPage() {
   useEffect(() => {
     loadReferenceData();
   }, []);
-
-  useEffect(() => {
-    const parsed = parseDateParam(weekParam);
-    if (!parsed) return;
-    const normalized = startOfWeek(parsed);
-    if (formatLocalDate(normalized) !== formatLocalDate(weekStart)) {
-      setWeekStart(normalized);
-    }
-  }, [weekParam, weekStart]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    const desired = formatLocalDate(weekStart);
-    if (params.get("week") !== desired) {
-      params.set("week", desired);
-      router.replace(`?${params.toString()}`, { scroll: false });
-    }
-  }, [weekStart, searchParams, router]);
 
   useEffect(() => {
     if (view === "week") {
