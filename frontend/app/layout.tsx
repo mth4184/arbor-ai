@@ -19,6 +19,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link className="header-pill header-pill-link" href="/internal-communications">
                   Internal communications
                 </Link>
+                <Link className="header-pill header-pill-link" href="/phc">
+                  PHC
+                </Link>
+                <Link className="header-pill header-pill-link" href="/gtc">
+                  GTC
+                </Link>
+                <Link className="header-pill header-pill-link" href="/sales-reps-communications">
+                  Sales Reps
+                </Link>
               </div>
             </header>
             <div className="content">{children}</div>
