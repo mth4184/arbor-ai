@@ -244,6 +244,7 @@ export default function CalendarPage() {
           <div className="panel-grid">
             {weekDays.map((day) => {
               const dayKey = formatLocalDate(day);
+              const isToday = dayKey === formatLocalDate(new Date());
               const dayJobs = jobs.filter((job) => {
                 if (!job.scheduled_start) return false;
                 return dateKey(job.scheduled_start) === dayKey;
@@ -251,7 +252,7 @@ export default function CalendarPage() {
               return (
                 <div
                   key={dayKey}
-                  className="panel calendar-drop"
+                  className={`panel calendar-drop calendar-week-panel ${isToday ? "calendar-day-today" : ""}`}
                   onDragOver={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -313,6 +314,7 @@ export default function CalendarPage() {
             {monthDays.map((day) => {
               const isCurrentMonth = day.getMonth() === selectedMonth.getMonth();
               const dayKey = formatLocalDate(day);
+              const isToday = dayKey === formatLocalDate(new Date());
               const dayJobs = jobs.filter((job) => {
                 if (!job.scheduled_start) return false;
                 return dateKey(job.scheduled_start) === dayKey;
@@ -320,7 +322,9 @@ export default function CalendarPage() {
               return (
                 <div
                   key={dayKey}
-                  className={`calendar-day calendar-drop ${isCurrentMonth ? "" : "calendar-day-muted"}`}
+                  className={`calendar-day calendar-drop ${isCurrentMonth ? "" : "calendar-day-muted"} ${
+                    isToday ? "calendar-day-today" : ""
+                  }`}
                   onDragOver={(event) => {
                     event.preventDefault();
                     event.stopPropagation();

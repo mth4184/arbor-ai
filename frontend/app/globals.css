@@ -979,6 +979,10 @@ textarea {
   display: grid;
   grid-template-columns: repeat(7, minmax(120px, 1fr));
   gap: 8px;
+  background: #fff;
+  border: 1px solid var(--sage-200);
+  border-radius: var(--radius-md);
+  padding: 8px;
 }
 
 .calendar-day {
@@ -990,20 +994,29 @@ textarea {
 }
 
 .calendar-day-header {
-  background: var(--sage-100);
+  background: var(--cream-100);
   font-weight: 700;
   text-align: center;
   padding: 10px 0;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 .calendar-day-muted {
   opacity: 0.45;
 }
 
+.calendar-day-today {
+  border-color: var(--moss-600);
+  box-shadow: 0 0 0 1px rgba(47, 111, 76, 0.2);
+}
+
 .calendar-day-number {
   font-weight: 700;
   font-size: 12px;
   margin-bottom: 6px;
+  color: var(--forest-900);
 }
 
 .calendar-job {
@@ -1014,7 +1027,8 @@ textarea {
   font-size: 11px;
   padding: 6px;
   border-radius: var(--radius-md);
-  background: var(--cream-100);
+  background: #f7f9fb;
+  border: 1px solid #d8e2ec;
   margin-bottom: 4px;
 }
 
@@ -1034,6 +1048,11 @@ textarea {
   color: var(--ink-700);
   font-size: 10px;
   line-height: 1.3;
+}
+
+.calendar-week-panel {
+  border: 1px solid var(--sage-200);
+  background: #fff;
 }
 
 .drag-list {
