@@ -3,5 +3,5 @@
 import CrewsPage from "../crews/page";
 
 export default function GtcPage() {
-  return <CrewsPage />;
+  return <CrewsPage filterType="GTC" />;
 }
