@@ -340,7 +340,6 @@ export default function CalendarPage() {
                   {dayJobs.slice(0, 3).map((job) => {
                     const customer = customers.find((item) => item.id === job.customer_id);
                     const jobType = jobTypes.find((type) => type.id === job.job_type_id);
-                    const address = job.service_address || customer?.service_address || "-";
                     return (
                       <div
                         key={job.id}
@@ -352,7 +351,6 @@ export default function CalendarPage() {
                           <div className="calendar-job-title">
                             {customer?.name || `Customer #${job.customer_id}`}
                           </div>
-                          <div className="calendar-job-meta">{address}</div>
                           <div className="calendar-job-meta">{jobType?.name || "Job type TBD"}</div>
                         </div>
                         <StatusChip status={job.status} />
