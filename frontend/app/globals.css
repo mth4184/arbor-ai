@@ -144,6 +144,18 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+.header-pill-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.header-pill-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .sidebar-nav {
   display: grid;
   gap: 8px;

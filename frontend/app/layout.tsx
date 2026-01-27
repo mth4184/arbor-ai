@@ -1,5 +1,6 @@
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import Link from "next/link";
 import Sidebar from "./components/Sidebar";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="header-actions">
                 <span className="header-pill">Dispatch ready</span>
                 <span className="header-pill">Winter prep</span>
+                <Link className="header-pill header-pill-link" href="/internal-communications">
+                  Internal communications
+                </Link>
               </div>
             </header>
             <div className="content">{children}</div>
