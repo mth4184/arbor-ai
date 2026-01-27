@@ -16,7 +16,6 @@ const NAV_ITEMS = [
   { href: "/sales-reps", label: "Sales Reps" },
   { href: "/equipment", label: "Equipment" },
   { href: "/plant-inventory", label: "Plant Inventory" },
-  { href: "/briguy", label: "Briguy" },
   { href: "/reports", label: "Reports" },
   { href: "/settings", label: "Settings" },
 ];
