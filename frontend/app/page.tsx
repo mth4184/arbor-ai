@@ -30,6 +30,7 @@ export default function Home() {
   const [unpaidInvoices, setUnpaidInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
 
   useEffect(() => {
     const today = new Date();
@@ -37,7 +38,6 @@ export default function Home() {
     tomorrow.setDate(today.getDate() + 1);
     const isoToday = today.toISOString();
     const isoTomorrow = tomorrow.toISOString();
-    const weekStart = startOfWeek(today);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
@@ -82,17 +82,23 @@ export default function Home() {
     }
 
     load();
-  }, []);
+  }, [weekStart]);
 
-  const weekStart = useMemo(() => startOfWeek(new Date()), []);
-  const weekDays = useMemo(
-    () => Array.from({ length: 7 }, (_, idx) => {
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 7 }, (_, idx) => {
       const day = new Date(weekStart);
       day.setDate(weekStart.getDate() + idx);
       return day;
-    }),
-    [weekStart],
-  );
+    });
+  }, [weekStart]);
+
+  function shiftWeek(offset: number) {
+    setWeekStart((prev) => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() + offset * 7);
+      return startOfWeek(next);
+    });
+  }
 
   const crewGroups = useMemo(() => {
     const ground = crews.filter((crew) => crew.type !== "PHC");
@@ -226,7 +232,15 @@ export default function Home() {
               Foreman and crew assignments for the current week, split by crew type.
             </p>
           </div>
-          <span className="badge">Week of {formatDayLabel(weekStart)}</span>
+          <div className="table-actions">
+            <button className="btn btn-secondary" onClick={() => shiftWeek(-1)}>
+              Previous
+            </button>
+            <button className="btn btn-secondary" onClick={() => shiftWeek(1)}>
+              Next
+            </button>
+            <span className="badge">Week of {formatDayLabel(weekStart)}</span>
+          </div>
         </div>
         <div className="weekly-schedule">
           {renderCrewCalendar("Ground crews", "GTC foreman schedule", crewGroups.ground)}
