@@ -1323,6 +1323,88 @@ textarea {
   text-align: center;
 }
 
+.weekly-schedule {
+  display: grid;
+  gap: 24px;
+}
+
+.weekly-schedule-group .card-header {
+  margin-bottom: 12px;
+}
+
+.weekly-calendar-scroll {
+  overflow-x: auto;
+}
+
+.weekly-calendar {
+  min-width: 960px;
+  display: grid;
+  gap: 6px;
+}
+
+.weekly-header,
+.weekly-row {
+  display: grid;
+  grid-template-columns: 200px repeat(7, minmax(140px, 1fr));
+  gap: 6px;
+}
+
+.weekly-cell {
+  border: 1px solid var(--sage-200);
+  background: #fff;
+  border-radius: var(--radius-md);
+  padding: 8px;
+  font-size: 12px;
+}
+
+.weekly-day-header {
+  background: var(--sage-100);
+  font-weight: 700;
+  text-align: center;
+}
+
+.weekly-crew-header {
+  background: var(--sage-100);
+  font-weight: 700;
+}
+
+.weekly-crew-name {
+  font-weight: 600;
+  color: var(--forest-900);
+}
+
+.weekly-day-cell {
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.weekly-job {
+  padding: 6px;
+  border-radius: var(--radius-md);
+  background: var(--cream-100);
+  border: 1px solid var(--sage-200);
+  display: grid;
+  gap: 4px;
+}
+
+.weekly-job-title {
+  font-weight: 600;
+  color: var(--forest-900);
+  font-size: 12px;
+}
+
+.weekly-job-meta {
+  font-size: 11px;
+  color: var(--ink-700);
+}
+
+.weekly-empty {
+  color: var(--ink-700);
+  font-size: 11px;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;

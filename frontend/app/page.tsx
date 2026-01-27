@@ -1,17 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { apiGet } from "./api";
 import StatusChip from "./components/StatusChip";
 
+function startOfWeek(date: Date) {
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  const start = new Date(date);
+  start.setDate(diff);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
+
+function dateKey(date: Date) {
+  return date.toLocaleDateString("en-CA");
+}
+
+function formatDayLabel(date: Date) {
+  return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
+
 export default function Home() {
   const [stats, setStats] = useState<any>(null);
-  const [todaysJobs, setTodaysJobs] = useState<any[]>([]);
+  const [weeklyJobs, setWeeklyJobs] = useState<any[]>([]);
   const [upcomingJobs, setUpcomingJobs] = useState<any[]>([]);
   const [openEstimates, setOpenEstimates] = useState<any[]>([]);
   const [unpaidInvoices, setUnpaidInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [crews, setCrews] = useState<any[]>([]);
 
   useEffect(() => {
     const today = new Date();
@@ -19,21 +37,37 @@ export default function Home() {
     tomorrow.setDate(today.getDate() + 1);
     const isoToday = today.toISOString();
     const isoTomorrow = tomorrow.toISOString();
+    const weekStart = startOfWeek(today);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    const isoWeekStart = weekStart.toISOString();
+    const isoWeekEnd = weekEnd.toISOString();
 
     async function load() {
-      const [dashboard, todayJobs, upcoming, draftEstimates, sentEstimates, unpaid, partial, customerItems] =
-        await Promise.all([
-          apiGet("/dashboard"),
-          apiGet("/jobs", { start: isoToday, end: isoTomorrow }),
-          apiGet("/jobs", { start: isoTomorrow }),
-          apiGet("/estimates", { status: "draft" }),
-          apiGet("/estimates", { status: "sent" }),
-          apiGet("/invoices", { status: "unpaid" }),
-          apiGet("/invoices", { status: "partial" }),
-          apiGet("/customers"),
-        ]);
+      const [
+        dashboard,
+        weekJobs,
+        upcoming,
+        draftEstimates,
+        sentEstimates,
+        unpaid,
+        partial,
+        customerItems,
+        crewItems,
+      ] = await Promise.all([
+        apiGet("/dashboard"),
+        apiGet("/jobs", { start: isoWeekStart, end: isoWeekEnd }),
+        apiGet("/jobs", { start: isoTomorrow }),
+        apiGet("/estimates", { status: "draft" }),
+        apiGet("/estimates", { status: "sent" }),
+        apiGet("/invoices", { status: "unpaid" }),
+        apiGet("/invoices", { status: "partial" }),
+        apiGet("/customers"),
+        apiGet("/crews"),
+      ]);
       setStats(dashboard || null);
-      setTodaysJobs(Array.isArray(todayJobs) ? todayJobs : []);
+      setWeeklyJobs(Array.isArray(weekJobs) ? weekJobs : []);
       setUpcomingJobs(Array.isArray(upcoming) ? upcoming : []);
       setOpenEstimates([
         ...(Array.isArray(draftEstimates) ? draftEstimates : []),
@@ -44,10 +78,102 @@ export default function Home() {
         ...(Array.isArray(partial) ? partial : []),
       ]);
       setCustomers(Array.isArray(customerItems) ? customerItems : []);
+      setCrews(Array.isArray(crewItems) ? crewItems : []);
     }
 
     load();
   }, []);
+
+  const weekStart = useMemo(() => startOfWeek(new Date()), []);
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, idx) => {
+      const day = new Date(weekStart);
+      day.setDate(weekStart.getDate() + idx);
+      return day;
+    }),
+    [weekStart],
+  );
+
+  const crewGroups = useMemo(() => {
+    const ground = crews.filter((crew) => crew.type !== "PHC");
+    const phc = crews.filter((crew) => crew.type === "PHC");
+    return { ground, phc };
+  }, [crews]);
+
+  const jobsByCrewDay = useMemo(() => {
+    const map = new Map<string, any[]>();
+    weeklyJobs.forEach((job) => {
+      if (!job.crew_id || !job.scheduled_start) return;
+      const jobDate = new Date(job.scheduled_start);
+      if (Number.isNaN(jobDate.getTime())) return;
+      const key = `${job.crew_id}-${dateKey(jobDate)}`;
+      const list = map.get(key) || [];
+      list.push(job);
+      map.set(key, list);
+    });
+    return map;
+  }, [weeklyJobs]);
+
+  function renderCrewCalendar(title: string, subtitle: string, crewList: any[]) {
+    return (
+      <div className="weekly-schedule-group">
+        <div className="card-header">
+          <div>
+            <div className="card-title">{title}</div>
+            <p className="card-subtitle">{subtitle}</p>
+          </div>
+          <span className="badge">{crewList.length} crews</span>
+        </div>
+        {crewList.length === 0 ? (
+          <p className="card-subtitle">No crews available.</p>
+        ) : (
+          <div className="weekly-calendar-scroll">
+            <div className="weekly-calendar">
+              <div className="weekly-header">
+                <div className="weekly-cell weekly-crew-header">Crew</div>
+                {weekDays.map((day) => (
+                  <div key={day.toISOString()} className="weekly-cell weekly-day-header">
+                    {formatDayLabel(day)}
+                  </div>
+                ))}
+              </div>
+              {crewList.map((crew) => (
+                <div key={crew.id} className="weekly-row">
+                  <div className="weekly-cell weekly-crew-name">{crew.name}</div>
+                  {weekDays.map((day) => {
+                    const key = `${crew.id}-${dateKey(day)}`;
+                    const jobs = jobsByCrewDay.get(key) || [];
+                    return (
+                      <div key={key} className="weekly-cell weekly-day-cell">
+                        {jobs.length === 0 ? (
+                          <span className="weekly-empty">—</span>
+                        ) : (
+                          jobs.map((job) => {
+                            const customer = customers.find((item) => item.id === job.customer_id);
+                            return (
+                              <div key={job.id} className="weekly-job">
+                                <div className="weekly-job-title">
+                                  {customer?.name || `Customer #${job.customer_id}`}
+                                </div>
+                                <div className="weekly-job-meta">
+                                  {job.service_address || customer?.service_address || "-"}
+                                </div>
+                                <StatusChip status={job.status} />
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <main className="page">
@@ -95,26 +221,17 @@ export default function Home() {
       <section className="card section">
         <div className="card-header">
           <div>
-            <div className="card-title">Today’s jobs</div>
-            <p className="card-subtitle">Crews and job status for the day.</p>
+            <div className="card-title">Weekly crew schedule</div>
+            <p className="card-subtitle">
+              Foreman and crew assignments for the current week, split by crew type.
+            </p>
           </div>
-          <span className="badge">{todaysJobs.length} jobs</span>
+          <span className="badge">Week of {formatDayLabel(weekStart)}</span>
         </div>
-        {todaysJobs.length === 0 ? (
-          <p className="card-subtitle">No jobs scheduled today.</p>
-        ) : (
-          <ul className="list">
-            {todaysJobs.map((job) => (
-              <li className="list-item" key={job.id}>
-                <div>
-                  <div className="list-title">Job #{job.id}</div>
-                  <div className="list-meta">Customer #{job.customer_id}</div>
-                </div>
-                <StatusChip status={job.status} />
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="weekly-schedule">
+          {renderCrewCalendar("Ground crews", "GTC foreman schedule", crewGroups.ground)}
+          {renderCrewCalendar("Plant health care crews", "PHC foreman schedule", crewGroups.phc)}
+        </div>
       </section>
 
       <section className="card section">
