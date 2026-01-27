@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet } from "./api";
 import StatusChip from "./components/StatusChip";
@@ -18,11 +19,22 @@ function dateKey(date: Date) {
   return date.toLocaleDateString("en-CA");
 }
 
+function parseDateParam(value: string | null) {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
 function formatDayLabel(date: Date) {
   return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
 export default function Home() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [stats, setStats] = useState<any>(null);
   const [weeklyJobs, setWeeklyJobs] = useState<any[]>([]);
   const [upcomingJobs, setUpcomingJobs] = useState<any[]>([]);
@@ -31,12 +43,30 @@ export default function Home() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const weekParam = searchParams.get("week");
+
+  useEffect(() => {
+    const parsed = parseDateParam(weekParam);
+    if (!parsed) return;
+    const normalized = startOfWeek(parsed);
+    if (dateKey(normalized) !== dateKey(weekStart)) {
+      setWeekStart(normalized);
+    }
+  }, [weekParam, weekStart]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const desired = dateKey(weekStart);
+    if (params.get("week") !== desired) {
+      params.set("week", desired);
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [weekStart, searchParams, router]);
 
   useEffect(() => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    const isoToday = today.toISOString();
     const isoTomorrow = tomorrow.toISOString();
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
