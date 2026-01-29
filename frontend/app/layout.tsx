@@ -1,14 +1,18 @@
+"use client";
+
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
+import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   return (
     <html lang="en">
       <body>
-        <div className="app-shell">
-          <Sidebar />
+        <div className={`app-shell ${sidebarCollapsed ? "collapsed" : ""}`}>
+          <Sidebar collapsed={sidebarCollapsed} />
           <div className="main">
             <header className="topbar">
               <div>
@@ -28,6 +32,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link className="header-pill header-pill-link" href="/sales-reps-communications">
                   Sales Reps
                 </Link>
+                <button
+                  className="sidebar-toggle"
+                  type="button"
+                  onClick={() => setSidebarCollapsed((prev) => !prev)}
+                  aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                  {sidebarCollapsed ? ">" : "<"}
+                </button>
               </div>
             </header>
             <div className="content">{children}</div>

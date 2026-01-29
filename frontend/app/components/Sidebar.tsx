@@ -18,10 +18,22 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings" },
 ];
 
-export default function Sidebar() {
+type SidebarProps = {
+  collapsed?: boolean;
+};
+
+function shortLabel(label: string) {
+  const words = label.split(" ").filter(Boolean);
+  if (words.length > 1) {
+    return words.map((word) => word[0]).join("").toUpperCase();
+  }
+  return label.slice(0, 3).toUpperCase();
+}
+
+export default function Sidebar({ collapsed }: SidebarProps) {
   const pathname = usePathname();
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="sidebar-brand">
         <div className="brand-mark" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -50,13 +62,17 @@ export default function Sidebar() {
             item.href === "/"
               ? pathname === "/"
               : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const short = shortLabel(item.label);
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`nav-link ${active ? "active" : ""}`}
             >
-              {item.label}
+              <span className="nav-label">{item.label}</span>
+              <span className="nav-short" aria-hidden="true">
+                {short}
+              </span>
             </Link>
           );
         })}
