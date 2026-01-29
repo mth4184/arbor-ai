@@ -1407,14 +1407,20 @@ textarea {
 }
 
 .weekly-day-header {
-  background: var(--sage-100);
+  background: var(--cream-100);
   font-weight: 700;
   text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 .weekly-crew-header {
-  background: var(--sage-100);
+  background: var(--cream-100);
   font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 .weekly-crew-name {
@@ -1441,8 +1447,8 @@ textarea {
 .weekly-job {
   padding: 6px;
   border-radius: var(--radius-md);
-  background: var(--cream-100);
-  border: 1px solid var(--sage-200);
+  background: #f7f9fb;
+  border: 1px solid #d8e2ec;
   display: grid;
   gap: 4px;
 }
