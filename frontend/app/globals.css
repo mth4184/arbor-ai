@@ -475,6 +475,19 @@ textarea {
   flex-wrap: wrap;
 }
 
+.row-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+  width: 100%;
+}
+
+.row-link:hover {
+  text-decoration: underline;
+}
+
 .card-grid {
   display: grid;
   gap: 16px;

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet } from "../api";
+import Link from "next/link";
 import StatusChip from "../components/StatusChip";
 
 function dateOffset(days: number) {
@@ -100,14 +101,33 @@ export default function ReportsPage() {
               {outstanding.map((invoice) => {
                 const customer = customers.find((item) => item.id === invoice.customer_id);
                 const address = customer?.service_address || customer?.billing_address || "-";
+                const customerId = invoice.customer_id ?? customer?.id;
                 return (
                   <tr key={invoice.invoice_id}>
-                    <td>Invoice #{invoice.invoice_id}</td>
-                    <td>{customer?.name || `Customer #${invoice.customer_id}`}</td>
-                    <td>{address}</td>
-                    <td>${invoice.balance}</td>
                     <td>
-                      <StatusChip status={invoice.status} />
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        Invoice #{invoice.invoice_id}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        {customer?.name || `Customer #${invoice.customer_id}`}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        {address}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        ${invoice.balance}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        <StatusChip status={invoice.status} />
+                      </Link>
                     </td>
                   </tr>
                 );
