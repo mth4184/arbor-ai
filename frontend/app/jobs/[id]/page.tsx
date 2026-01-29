@@ -57,6 +57,10 @@ export default function JobDetailPage() {
     if (!job) return;
     const updated = await apiPut(`/jobs/${id}`, job);
     setJob(updated);
+    // Dispatch event to notify dashboard and calendar of job update
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("calendarUpdated"));
+    }
   }
 
   async function addJobType() {

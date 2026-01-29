@@ -20,6 +20,7 @@ const NAV_ITEMS = [
 
 type SidebarProps = {
   collapsed?: boolean;
+  onToggle?: () => void;
 };
 
 function shortLabel(label: string) {
@@ -30,10 +31,35 @@ function shortLabel(label: string) {
   return label.slice(0, 3).toUpperCase();
 }
 
-export default function Sidebar({ collapsed }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+      {onToggle && (
+        <button
+          className="sidebar-toggle-button"
+          type="button"
+          onClick={onToggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d={collapsed ? "M9 18L15 12L9 6" : "M15 18L9 12L15 6"}
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
       <div className="sidebar-brand">
         <div className="brand-mark" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

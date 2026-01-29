@@ -110,6 +110,38 @@ export default function Home() {
     }
 
     load();
+
+    // Listen for calendar updates from the calendar page and job updates
+    const handleCalendarUpdate = () => {
+      // Small delay to ensure backend has processed the update
+      setTimeout(() => {
+        load();
+      }, 100);
+    };
+
+    // Refresh when window becomes visible (user switches back to tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        load();
+      }
+    };
+
+    // Periodic refresh as fallback (every 30 seconds when tab is visible)
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        load();
+      }
+    }, 30000);
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("calendarUpdated", handleCalendarUpdate);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      return () => {
+        window.removeEventListener("calendarUpdated", handleCalendarUpdate);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        clearInterval(intervalId);
+      };
+    }
   }, [weekStart, scheduleView, selectedMonth]);
 
   const weekDays = useMemo(() => {

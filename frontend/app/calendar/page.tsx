@@ -114,18 +114,36 @@ export default function CalendarPage() {
   }, []);
 
   useEffect(() => {
-    if (view === "week") {
-      const end = new Date(weekStart);
-      end.setDate(weekStart.getDate() + 6);
-      loadCalendar(weekStart, end);
-    } else {
-      const monthStart = startOfMonth(selectedMonth);
-      const monthEnd = new Date(monthStart);
-      monthEnd.setMonth(monthStart.getMonth() + 1);
-      monthEnd.setDate(0);
-      loadCalendar(monthStart, monthEnd);
+    function refreshCalendar() {
+      if (view === "week") {
+        const end = new Date(weekStart);
+        end.setDate(weekStart.getDate() + 6);
+        loadCalendar(weekStart, end);
+      } else {
+        const monthStart = startOfMonth(selectedMonth);
+        const monthEnd = new Date(monthStart);
+        monthEnd.setMonth(monthStart.getMonth() + 1);
+        monthEnd.setDate(0);
+        loadCalendar(monthStart, monthEnd);
+      }
+      loadOpenJobs();
     }
-    loadOpenJobs();
+
+    refreshCalendar();
+
+    // Listen for job updates from other pages
+    const handleCalendarUpdate = () => {
+      setTimeout(() => {
+        refreshCalendar();
+      }, 100);
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("calendarUpdated", handleCalendarUpdate);
+      return () => {
+        window.removeEventListener("calendarUpdated", handleCalendarUpdate);
+      };
+    }
   }, [weekStart, view, selectedMonth]);
 
   function nextWeek() {
@@ -154,6 +172,10 @@ export default function CalendarPage() {
       monthEnd.setDate(0);
       await loadCalendar(monthStart, monthEnd);
     }
+    // Dispatch event to notify dashboard of calendar update
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("calendarUpdated"));
+    }
   }
 
   async function unscheduleJob(jobId: number) {
@@ -168,6 +190,10 @@ export default function CalendarPage() {
       const monthEnd = new Date(monthStart);
       monthEnd.setMonth(monthStart.getMonth() + 1);
       await loadCalendar(monthStart, monthEnd);
+    }
+    // Dispatch event to notify dashboard of calendar update
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("calendarUpdated"));
     }
   }
 
