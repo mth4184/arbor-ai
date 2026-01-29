@@ -13,3 +13,14 @@ env/
 
 # OS
 .DS_Store
+
+#NEXT bs stuff
+# Next.js
+.next/
+out/
+
+# Databases
+*.db
+
+# Node
+node_modules/
