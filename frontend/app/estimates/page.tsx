@@ -20,6 +20,7 @@ export default function EstimatesPage() {
   const [estimates, setEstimates] = useState<any[]>([]);
   const [approvalEstimates, setApprovalEstimates] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
+  const [salesReps, setSalesReps] = useState<any[]>([]);
   const [customerId, setCustomerId] = useState<string>("");
   const [status, setStatus] = useState("draft");
   const [taxRate, setTaxRate] = useState(0);
@@ -38,20 +39,25 @@ export default function EstimatesPage() {
   const [scheduledStart, setScheduledStart] = useState("");
   const [scheduledEnd, setScheduledEnd] = useState("");
   const [crewId, setCrewId] = useState<string>("");
+  const [salesRepId, setSalesRepId] = useState<string>("");
+  const selectedSalesRepName = salesReps.find((rep) => String(rep.id) === salesRepId)?.name;
 
   async function refresh() {
-    const [customerItems, estimateItems, sentEstimates, approvedEstimates, crewItems] = await Promise.all([
-      apiGet("/customers"),
-      apiGet("/estimates", { q: search, status: statusFilter || undefined }),
-      apiGet("/estimates", { status: "sent" }),
-      apiGet("/estimates", { status: "approved" }),
-      apiGet("/crews"),
-    ]);
+    const [customerItems, estimateItems, sentEstimates, approvedEstimates, crewItems, salesRepItems] =
+      await Promise.all([
+        apiGet("/customers"),
+        apiGet("/estimates", { q: search, status: statusFilter || undefined }),
+        apiGet("/estimates", { status: "sent" }),
+        apiGet("/estimates", { status: "approved" }),
+        apiGet("/crews"),
+        apiGet("/sales-reps"),
+      ]);
     setCustomers(customerItems);
     setEstimates(estimateItems);
     const approvalList = [...(sentEstimates || []), ...(approvedEstimates || [])];
     setApprovalEstimates(approvalList);
     setCrews(crewItems || []);
+    setSalesReps(salesRepItems || []);
     if (!customerId && customerItems.length) {
       setCustomerId(String(customerItems[0].id));
     }
@@ -97,6 +103,7 @@ export default function EstimatesPage() {
     const taxAmount = Number(((subtotal * taxRate) / 100).toFixed(2));
     await apiPost("/estimates", {
       customer_id: Number(customerId),
+      sales_rep_id: salesRepId ? Number(salesRepId) : null,
       status,
       service_address: serviceAddress,
       scope,
@@ -163,18 +170,34 @@ export default function EstimatesPage() {
             <div className="card-title">Create estimate</div>
             <p className="card-subtitle">Scope, hazards, and pricing details.</p>
           </div>
-          <span className="badge">Draft</span>
+          <div className="table-actions">
+            <span className="badge">Draft</span>
+            <span className="badge">Sales rep: {selectedSalesRepName || "Unassigned"}</span>
+          </div>
         </div>
         <div className="form-grid">
-          <div className="field">
-            <label className="label">Customer</label>
-            <select className="select" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+          <div className="form-row">
+            <div className="field">
+              <label className="label">Customer</label>
+              <select className="select" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label className="label">Sales rep</label>
+              <select className="select" value={salesRepId} onChange={(e) => setSalesRepId(e.target.value)}>
+                <option value="">Unassigned</option>
+                {salesReps.map((rep) => (
+                  <option key={rep.id} value={rep.id}>
+                    {rep.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="field">
             <label className="label">Status</label>
@@ -313,13 +336,17 @@ export default function EstimatesPage() {
                 value={selectedEstimateId}
                 onChange={(e) => setSelectedEstimateId(e.target.value)}
               >
-                {approvalEstimates.map((estimate) => (
-                  <option key={estimate.id} value={estimate.id}>
-                  Estimate #{estimate.id} ·{" "}
-                  {customers.find((item) => item.id === estimate.customer_id)?.name ||
-                    `Customer #${estimate.customer_id}`}
-                  </option>
-                ))}
+                {approvalEstimates.map((estimate) => {
+                  const customerName =
+                    customers.find((item) => item.id === estimate.customer_id)?.name ||
+                    `Customer #${estimate.customer_id}`;
+                  const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
+                  return (
+                    <option key={estimate.id} value={estimate.id}>
+                      Estimate #{estimate.id} · {customerName} · {salesRep?.name || "Sales rep unassigned"}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div className="field">
@@ -361,20 +388,34 @@ export default function EstimatesPage() {
             {approvalEstimates.length === 0 ? (
               <p className="card-subtitle">No sent or approved estimates available.</p>
             ) : (
-              <ul className="list">
-                {approvalEstimates.slice(0, 5).map((estimate) => (
-                  <li key={estimate.id} className="list-item">
-                    <div>
-                      <div className="list-title">Estimate #{estimate.id}</div>
-                      <div className="list-meta">
-                        {customers.find((item) => item.id === estimate.customer_id)?.name ||
-                          `Customer #${estimate.customer_id}`}
-                      </div>
-                    </div>
-                    <StatusChip status={estimate.status} />
-                  </li>
-                ))}
-              </ul>
+              <table className="table section">
+                <thead>
+                  <tr>
+                    <th>Estimate</th>
+                    <th>Customer</th>
+                    <th>Sales rep</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {approvalEstimates.slice(0, 5).map((estimate) => {
+                    const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
+                    return (
+                      <tr key={estimate.id}>
+                        <td>Estimate #{estimate.id}</td>
+                        <td>
+                          {customers.find((item) => item.id === estimate.customer_id)?.name ||
+                            `Customer #${estimate.customer_id}`}
+                        </td>
+                        <td>{salesRep?.name || "Sales rep unassigned"}</td>
+                        <td>
+                          <StatusChip status={estimate.status} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
         </section>
@@ -411,6 +452,7 @@ export default function EstimatesPage() {
               <tr>
                 <th>Estimate</th>
                 <th>Customer</th>
+                <th>Sales rep</th>
                 <th>Address</th>
                 <th>Total</th>
                 <th>Status</th>
@@ -420,10 +462,12 @@ export default function EstimatesPage() {
             <tbody>
               {estimates.map((estimate) => {
                 const customer = customers.find((item) => item.id === estimate.customer_id);
+                const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
                 return (
                   <tr key={estimate.id}>
                     <td>Estimate #{estimate.id}</td>
                     <td>{customer?.name || `Customer #${estimate.customer_id}`}</td>
+                    <td>{salesRep?.name || (estimate.sales_rep_id ? `Rep #${estimate.sales_rep_id}` : "-")}</td>
                     <td>{estimate.service_address || customer?.service_address || "-"}</td>
                     <td>${estimate.total}</td>
                     <td>

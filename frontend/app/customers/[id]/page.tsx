@@ -15,17 +15,19 @@ export default function CustomerDetailPage() {
   const [estimates, setEstimates] = useState<any[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [salesReps, setSalesReps] = useState<any[]>([]);
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const [attachmentCaption, setAttachmentCaption] = useState("");
 
   async function load() {
-    const [cust, files, leadItems, estimateItems, jobItems, invoiceItems] = await Promise.all([
+    const [cust, files, leadItems, estimateItems, jobItems, invoiceItems, salesRepItems] = await Promise.all([
       apiGet(`/customers/${id}`),
       apiGet("/attachments", { entity_type: "customer", entity_id: id }),
       apiGet("/leads", { customer_id: id }),
       apiGet("/estimates", { customer_id: id }),
       apiGet("/jobs", { customer_id: id }),
       apiGet("/invoices", { customer_id: id }),
+      apiGet("/sales-reps"),
     ]);
     setCustomer(cust);
     setAttachments(files || []);
@@ -33,6 +35,7 @@ export default function CustomerDetailPage() {
     setEstimates(estimateItems || []);
     setJobs(jobItems || []);
     setInvoices(invoiceItems || []);
+    setSalesReps(salesRepItems || []);
   }
 
   useEffect(() => {
@@ -225,19 +228,37 @@ export default function CustomerDetailPage() {
           <div className="panel">
             <div className="list-title">Estimates</div>
             <p className="list-meta">{estimates.length} estimates</p>
-            <ul className="list section">
-              {estimates.map((estimate) => (
-                <li key={estimate.id} className="list-item">
-                  <div>
-                    <div className="list-title">Estimate #{estimate.id}</div>
-                    <div className="list-meta">${estimate.total}</div>
-                  </div>
-                  <Link className="btn btn-secondary" href={`/estimates/${estimate.id}`}>
-                    View
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {estimates.length === 0 ? (
+              <p className="card-subtitle section">No estimates yet.</p>
+            ) : (
+              <table className="table section">
+                <thead>
+                  <tr>
+                    <th>Estimate</th>
+                    <th>Sales rep</th>
+                    <th>Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estimates.map((estimate) => {
+                    const salesRep = salesReps.find((rep) => rep.id === estimate.sales_rep_id);
+                    return (
+                      <tr key={estimate.id}>
+                        <td>Estimate #{estimate.id}</td>
+                        <td>{salesRep?.name || (estimate.sales_rep_id ? `Rep #${estimate.sales_rep_id}` : "-")}</td>
+                        <td>${estimate.total}</td>
+                        <td>
+                          <Link className="btn btn-secondary" href={`/estimates/${estimate.id}`}>
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
           <div className="panel">
             <div className="list-title">Jobs</div>

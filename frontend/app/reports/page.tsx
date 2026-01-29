@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet } from "../api";
+import Link from "next/link";
 import StatusChip from "../components/StatusChip";
 
 function dateOffset(days: number) {
@@ -16,16 +17,19 @@ export default function ReportsPage() {
   const [revenue, setRevenue] = useState<any | null>(null);
   const [conversion, setConversion] = useState<any | null>(null);
   const [outstanding, setOutstanding] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
 
   async function load() {
-    const [rev, conv, outstandingInvoices] = await Promise.all([
+    const [rev, conv, outstandingInvoices, customerItems] = await Promise.all([
       apiGet("/reports/revenue", { start, end }),
       apiGet("/reports/estimate-conversion", { start, end }),
       apiGet("/reports/outstanding-invoices"),
+      apiGet("/customers"),
     ]);
     setRevenue(rev);
     setConversion(conv);
     setOutstanding(outstandingInvoices || []);
+    setCustomers(customerItems || []);
   }
 
   useEffect(() => {
@@ -88,21 +92,46 @@ export default function ReportsPage() {
               <tr>
                 <th>Invoice</th>
                 <th>Customer</th>
+                <th>Address</th>
                 <th>Balance</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {outstanding.map((invoice) => (
-                <tr key={invoice.invoice_id}>
-                  <td>Invoice #{invoice.invoice_id}</td>
-                  <td>Customer #{invoice.customer_id}</td>
-                  <td>${invoice.balance}</td>
-                  <td>
-                    <StatusChip status={invoice.status} />
-                  </td>
-                </tr>
-              ))}
+              {outstanding.map((invoice) => {
+                const customer = customers.find((item) => item.id === invoice.customer_id);
+                const address = customer?.service_address || customer?.billing_address || "-";
+                const customerId = invoice.customer_id ?? customer?.id;
+                return (
+                  <tr key={invoice.invoice_id}>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        Invoice #{invoice.invoice_id}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        {customer?.name || `Customer #${invoice.customer_id}`}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        {address}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        ${invoice.balance}
+                      </Link>
+                    </td>
+                    <td>
+                      <Link className="row-link" href={`/customers/${customerId}`}>
+                        <StatusChip status={invoice.status} />
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

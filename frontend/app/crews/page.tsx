@@ -12,9 +12,13 @@ const emptyForm = {
   member_ids: "",
 };
 
-export default function CrewsPage() {
+type CrewsPageProps = {
+  filterType?: "GTC" | "PHC";
+};
+
+export default function CrewsPage({ filterType }: CrewsPageProps) {
   const [crews, setCrews] = useState<any[]>([]);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState({ ...emptyForm, type: filterType ?? emptyForm.type });
 
   async function refresh() {
     setCrews(await apiGet("/crews"));
@@ -23,6 +27,12 @@ export default function CrewsPage() {
   useEffect(() => {
     refresh();
   }, []);
+
+  useEffect(() => {
+    if (filterType) {
+      setForm((prev) => ({ ...prev, type: filterType }));
+    }
+  }, [filterType]);
 
   async function createCrew() {
     if (!form.name.trim()) return;
@@ -41,13 +51,25 @@ export default function CrewsPage() {
     await refresh();
   }
 
+  const visibleCrews = filterType ? crews.filter((crew) => crew.type === filterType) : crews;
+  const pageEyebrow = filterType ?? "Crews";
+  const pageTitle =
+    filterType === "PHC"
+      ? "Plant health care crews"
+      : filterType === "GTC"
+        ? "Ground crews"
+        : "Crew management";
+  const pageSubtitle = filterType
+    ? `Manage ${filterType} teams, assignments, and schedules.`
+    : "Assign employees to crews and track schedules.";
+
   return (
     <main className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Crews</p>
-          <h2 className="page-title">Crew management</h2>
-          <p className="page-subtitle">Assign employees to crews and track schedules.</p>
+          <p className="eyebrow">{pageEyebrow}</p>
+          <h2 className="page-title">{pageTitle}</h2>
+          <p className="page-subtitle">{pageSubtitle}</p>
         </div>
         <button className="btn btn-primary" onClick={createCrew}>
           New Crew
@@ -77,9 +99,16 @@ export default function CrewsPage() {
               className="select"
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
+              disabled={Boolean(filterType)}
             >
-              <option value="GTC">GTC</option>
-              <option value="PHC">PHC</option>
+              {filterType ? (
+                <option value={filterType}>{filterType}</option>
+              ) : (
+                <>
+                  <option value="GTC">GTC</option>
+                  <option value="PHC">PHC</option>
+                </>
+              )}
             </select>
           </div>
           <div className="field">
@@ -116,9 +145,9 @@ export default function CrewsPage() {
             <div className="card-title">Crews</div>
             <p className="card-subtitle">Tap to open crew details and schedules.</p>
           </div>
-          <span className="badge">{crews.length} crews</span>
+          <span className="badge">{visibleCrews.length} crews</span>
         </div>
-        {crews.length === 0 ? (
+        {visibleCrews.length === 0 ? (
           <p className="card-subtitle">No crews yet.</p>
         ) : (
           <table className="table section">
@@ -131,7 +160,7 @@ export default function CrewsPage() {
               </tr>
             </thead>
             <tbody>
-              {crews.map((crew) => (
+              {visibleCrews.map((crew) => (
                 <tr key={crew.id}>
                   <td>{crew.name}</td>
                   <td>{crew.type}</td>

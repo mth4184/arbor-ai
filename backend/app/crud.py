@@ -127,6 +127,7 @@ def create_estimate(db: Session, payload, line_items):
     estimate = models.Estimate(
         customer_id=payload.customer_id,
         lead_id=payload.lead_id,
+        sales_rep_id=payload.sales_rep_id,
         status=payload.status,
         service_address=payload.service_address,
         scope=payload.scope,

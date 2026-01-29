@@ -164,6 +164,7 @@ def seed_db():
         estimate = models.Estimate(
             customer_id=customer.id,
             lead_id=lead.id,
+            sales_rep_id=random.choice(sales_reps).id if sales_reps else None,
             status=status,
             service_address=customer.service_address,
             scope="Remove two mature oaks",

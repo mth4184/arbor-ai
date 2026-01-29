@@ -11,7 +11,7 @@ const emptyForm = {
   notes: "",
 };
 
-export default function SalesRepsPage() {
+export default function SalesRepsCommunicationsPage() {
   const [salesReps, setSalesReps] = useState<any[]>([]);
   const [jobs, setJobs] = useState<any[]>([]);
   const [form, setForm] = useState(emptyForm);

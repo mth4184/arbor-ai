@@ -152,6 +152,8 @@ def create_estimate(payload: schemas.EstimateCreate, db: Session = Depends(get_d
         lead = get_or_404(db, models.Lead, payload.lead_id, "Lead")
         if lead.customer_id != payload.customer_id:
             raise HTTPException(status_code=400, detail="Lead does not match customer")
+    if payload.sales_rep_id:
+        get_or_404(db, models.SalesRep, payload.sales_rep_id, "Sales rep")
     validate_status(payload.status, {"draft", "sent", "approved", "rejected"}, "estimate")
     if payload.status == "sent" and payload.sent_at is None:
         payload = payload.model_copy(update={"sent_at": datetime.utcnow()})
@@ -180,6 +182,8 @@ def update_estimate(estimate_id: int, payload: schemas.EstimateUpdate, db: Sessi
     estimate = get_or_404(db, models.Estimate, estimate_id, "Estimate")
     updates = payload.model_dump(exclude_unset=True)
     updates.pop("line_items", None)
+    if updates.get("sales_rep_id") is not None:
+        get_or_404(db, models.SalesRep, updates["sales_rep_id"], "Sales rep")
     if updates.get("status"):
         validate_status(updates["status"], {"draft", "sent", "approved", "rejected"}, "estimate")
         if updates["status"] == "approved" and not estimate.approved_at:
@@ -208,6 +212,7 @@ def convert_estimate_to_job(
         scheduled_start=payload.scheduled_start,
         scheduled_end=payload.scheduled_end,
         crew_id=payload.crew_id,
+        sales_rep_id=estimate.sales_rep_id,
         service_address=estimate.service_address,
         total=estimate.total,
         notes=payload.notes,
@@ -239,6 +244,7 @@ def approve_estimate_and_invoice(
             customer_id=estimate.customer_id,
             estimate_id=estimate.id,
             status="scheduled",
+            sales_rep_id=estimate.sales_rep_id,
             total=estimate.total,
             notes=estimate.notes,
         )

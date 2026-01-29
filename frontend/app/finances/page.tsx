@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import NumberInput from "../components/NumberInput";
 
 type ViewMode = "weekly" | "monthly" | "quarterly" | "annual";
 
@@ -208,6 +210,7 @@ export default function FinancesPage() {
   const [range, setRange] = useState("Last 13 weeks");
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [newMetricNames, setNewMetricNames] = useState<Record<string, string>>({});
 
   const labels = useMemo(() => getLabelsForView(view), [view]);
 
@@ -235,8 +238,37 @@ export default function FinancesPage() {
     );
   }
 
-  function addMetric(groupId: string) {
+  function updateMetricTitle(groupId: string, metricId: string, title: string) {
+    setGroups((prev) =>
+      prev.map((group) => {
+        if (group.id !== groupId) return group;
+        return {
+          ...group,
+          metrics: group.metrics.map((metric) =>
+            metric.id === metricId ? { ...metric, title } : metric,
+          ),
+        };
+      }),
+    );
+  }
+
+  function updateMetricGoal(groupId: string, metricId: string, goal: number) {
+    setGroups((prev) =>
+      prev.map((group) => {
+        if (group.id !== groupId) return group;
+        return {
+          ...group,
+          metrics: group.metrics.map((metric) =>
+            metric.id === metricId ? { ...metric, goal } : metric,
+          ),
+        };
+      }),
+    );
+  }
+
+  function addMetric(groupId: string, name?: string) {
     const id = `metric-${Date.now()}`;
+    const title = name?.trim() || "New metric";
     setGroups((prev) =>
       prev.map((group) =>
         group.id === groupId
@@ -246,7 +278,7 @@ export default function FinancesPage() {
                 ...group.metrics,
                 {
                   id,
-                  title: "New metric",
+                  title,
                   goal: 0,
                   format: "number",
                   trendEnabled: false,
@@ -262,6 +294,7 @@ export default function FinancesPage() {
           : group,
       ),
     );
+    setNewMetricNames((prev) => ({ ...prev, [groupId]: "" }));
   }
 
   function addGroup() {
@@ -348,7 +381,9 @@ export default function FinancesPage() {
             <button className="btn btn-secondary" onClick={addGroup}>
               New group
             </button>
-            <button className="btn btn-ghost">Go to Measurable Manager</button>
+            <Link className="btn btn-ghost" href="/measurable-manager">
+              Go to Measurable Manager
+            </Link>
             <div className="scorecard-menu">
               <button className="btn btn-ghost" onClick={() => setMenuOpen(menuOpen ? null : "menu")}>
                 ⋯
@@ -378,9 +413,36 @@ export default function FinancesPage() {
               <div className="scorecard-group-title">
                 {group.name} <span className="scorecard-count">{group.metrics.length}</span>
               </div>
-              <button className="btn btn-secondary" onClick={() => addMetric(group.id)}>
-                New measurable
-              </button>
+              <div className="scorecard-group-actions">
+                <div className="scorecard-group-views">
+                  {(["weekly", "monthly", "quarterly", "annual"] as ViewMode[]).map((tab) => (
+                    <button
+                      key={tab}
+                      className={`tab-pill tab-pill-small ${view === tab ? "active" : ""}`}
+                      onClick={() => setView(tab)}
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  className="input scorecard-new-metric"
+                  placeholder="New measurable name"
+                  value={newMetricNames[group.id] ?? ""}
+                  onChange={(event) =>
+                    setNewMetricNames((prev) => ({ ...prev, [group.id]: event.target.value }))
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addMetric(group.id, newMetricNames[group.id]);
+                    }
+                  }}
+                />
+                <button className="btn btn-secondary" onClick={() => addMetric(group.id, newMetricNames[group.id])}>
+                  New measurable
+                </button>
+              </div>
             </div>
             <div className="scorecard-table-wrapper">
               <table className="scorecard-table">
@@ -425,20 +487,45 @@ export default function FinancesPage() {
                             }}
                           />
                         </td>
-                        <td>{metric.title}</td>
-                        <td>{metric.goal ? formatMetricValue(metric, metric.goal) : "-"}</td>
+                        <td>
+                          <input
+                            className="scorecard-title-input"
+                            value={metric.title}
+                            onChange={(event) => updateMetricTitle(group.id, metric.id, event.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <NumberInput
+                            className="scorecard-goal-input"
+                            value={metric.goal}
+                            onValueChange={(value) => updateMetricGoal(group.id, metric.id, value)}
+                            prefix={metric.format === "currency" ? "$" : undefined}
+                            placeholder="—"
+                          />
+                        </td>
                         <td>{formatMetricValue(metric, average(values))}</td>
                         <td>{formatMetricValue(metric, total(values))}</td>
-                        {values.map((value, idx) => (
-                          <td key={`${metric.id}-${idx}`} className={valueClass(value, metric.goal)}>
-                            <input
-                              className="scorecell-input"
-                              type="number"
-                              value={value}
-                              onChange={(e) => updateMetricValue(group.id, metric.id, idx, Number(e.target.value))}
-                            />
-                          </td>
-                        ))}
+                        {values.map((value, idx) => {
+                          const displayValue = value === 0 ? "" : value;
+                          return (
+                            <td key={`${metric.id}-${idx}`} className={valueClass(value, metric.goal)}>
+                              <input
+                                className="scorecell-input"
+                                type="number"
+                                value={displayValue}
+                                onChange={(e) => {
+                                  const nextValue = e.target.value;
+                                  updateMetricValue(
+                                    group.id,
+                                    metric.id,
+                                    idx,
+                                    nextValue === "" ? 0 : Number(nextValue),
+                                  );
+                                }}
+                              />
+                            </td>
+                          );
+                        })}
                       </tr>
                     );
                   })}
