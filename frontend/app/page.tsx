@@ -14,6 +14,13 @@ function startOfWeek(date: Date) {
   return start;
 }
 
+function startOfMonth(date: Date) {
+  const start = new Date(date);
+  start.setDate(1);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
+
 function dateKey(date: Date) {
   return date.toLocaleDateString("en-CA");
 }
@@ -24,25 +31,46 @@ function formatDayLabel(date: Date) {
 
 export default function Home() {
   const [stats, setStats] = useState<any>(null);
-  const [weeklyJobs, setWeeklyJobs] = useState<any[]>([]);
+  const [scheduleJobs, setScheduleJobs] = useState<any[]>([]);
   const [upcomingJobs, setUpcomingJobs] = useState<any[]>([]);
   const [openEstimates, setOpenEstimates] = useState<any[]>([]);
   const [unpaidInvoices, setUnpaidInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [crews, setCrews] = useState<any[]>([]);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const [scheduleView, setScheduleView] = useState<"week" | "month">("week");
+  const [monthOffset, setMonthOffset] = useState(0);
+
+  const selectedMonth = useMemo(() => {
+    const base = new Date();
+    base.setDate(1);
+    base.setMonth(base.getMonth() + monthOffset);
+    base.setHours(0, 0, 0, 0);
+    return base;
+  }, [monthOffset]);
+
+  const monthLabel = useMemo(
+    () => selectedMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" }),
+    [selectedMonth],
+  );
 
   useEffect(() => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    const isoToday = today.toISOString();
     const isoTomorrow = tomorrow.toISOString();
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
-    const isoWeekStart = weekStart.toISOString();
-    const isoWeekEnd = weekEnd.toISOString();
+    const monthStart = startOfMonth(selectedMonth);
+    const monthEnd = new Date(monthStart);
+    monthEnd.setMonth(monthStart.getMonth() + 1);
+    monthEnd.setDate(0);
+    monthEnd.setHours(23, 59, 59, 999);
+    const rangeStart = scheduleView === "month" ? monthStart : weekStart;
+    const rangeEnd = scheduleView === "month" ? monthEnd : weekEnd;
+    const isoRangeStart = rangeStart.toISOString();
+    const isoRangeEnd = rangeEnd.toISOString();
 
     async function load() {
       const [
@@ -57,7 +85,7 @@ export default function Home() {
         crewItems,
       ] = await Promise.all([
         apiGet("/dashboard"),
-        apiGet("/calendar", { start: isoWeekStart, end: isoWeekEnd }),
+        apiGet("/calendar", { start: isoRangeStart, end: isoRangeEnd }),
         apiGet("/jobs", { start: isoTomorrow }),
         apiGet("/estimates", { status: "draft" }),
         apiGet("/estimates", { status: "sent" }),
@@ -67,7 +95,7 @@ export default function Home() {
         apiGet("/crews"),
       ]);
       setStats(dashboard || null);
-      setWeeklyJobs(Array.isArray(weekJobs) ? weekJobs : []);
+      setScheduleJobs(Array.isArray(weekJobs) ? weekJobs : []);
       setUpcomingJobs(Array.isArray(upcoming) ? upcoming : []);
       setOpenEstimates([
         ...(Array.isArray(draftEstimates) ? draftEstimates : []),
@@ -82,7 +110,7 @@ export default function Home() {
     }
 
     load();
-  }, [weekStart]);
+  }, [weekStart, scheduleView, selectedMonth]);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, idx) => {
@@ -92,12 +120,25 @@ export default function Home() {
     });
   }, [weekStart]);
 
+  const monthDays = useMemo(() => {
+    const start = startOfWeek(startOfMonth(selectedMonth));
+    return Array.from({ length: 42 }, (_, idx) => {
+      const day = new Date(start);
+      day.setDate(start.getDate() + idx);
+      return day;
+    });
+  }, [selectedMonth]);
+
   function shiftWeek(offset: number) {
     setWeekStart((prev) => {
       const next = new Date(prev);
       next.setDate(prev.getDate() + offset * 7);
       return startOfWeek(next);
     });
+  }
+
+  function shiftMonth(offset: number) {
+    setMonthOffset((prev) => prev + offset);
   }
 
   const crewGroups = useMemo(() => {
@@ -108,7 +149,7 @@ export default function Home() {
 
   const jobsByCrewDay = useMemo(() => {
     const map = new Map<string, any[]>();
-    weeklyJobs.forEach((job) => {
+    scheduleJobs.forEach((job) => {
       if (!job.crew_id || !job.scheduled_start) return;
       const jobDate = new Date(job.scheduled_start);
       if (Number.isNaN(jobDate.getTime())) return;
@@ -118,7 +159,21 @@ export default function Home() {
       map.set(key, list);
     });
     return map;
-  }, [weeklyJobs]);
+  }, [scheduleJobs]);
+
+  const jobsByDay = useMemo(() => {
+    const map = new Map<string, any[]>();
+    scheduleJobs.forEach((job) => {
+      if (!job.scheduled_start) return;
+      const jobDate = new Date(job.scheduled_start);
+      if (Number.isNaN(jobDate.getTime())) return;
+      const key = dateKey(jobDate);
+      const list = map.get(key) || [];
+      list.push(job);
+      map.set(key, list);
+    });
+    return map;
+  }, [scheduleJobs]);
 
   function renderCrewCalendar(title: string, subtitle: string, crewList: any[]) {
     return (
@@ -181,6 +236,63 @@ export default function Home() {
     );
   }
 
+  function renderMonthlyCalendar(title: string, subtitle: string, crewList: any[]) {
+    const crewIds = new Set(crewList.map((crew) => crew.id));
+    return (
+      <div className="weekly-schedule-group">
+        <div className="card-header">
+          <div>
+            <div className="card-title">{title}</div>
+            <p className="card-subtitle">{subtitle}</p>
+          </div>
+          <span className="badge">{crewList.length} crews</span>
+        </div>
+        {crewList.length === 0 ? (
+          <p className="card-subtitle">No crews available.</p>
+        ) : (
+          <div className="calendar-grid">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((label) => (
+              <div key={label} className="calendar-day calendar-day-header">
+                {label}
+              </div>
+            ))}
+            {monthDays.map((day) => {
+              const isCurrentMonth = day.getMonth() === selectedMonth.getMonth();
+              const dayKey = dateKey(day);
+              const isToday = dayKey === dateKey(new Date());
+              const dayJobs = (jobsByDay.get(dayKey) || []).filter((job) => crewIds.has(job.crew_id));
+              return (
+                <div
+                  key={`${title}-${dayKey}`}
+                  className={`calendar-day ${isCurrentMonth ? "" : "calendar-day-muted"} ${
+                    isToday ? "calendar-day-today" : ""
+                  }`}
+                >
+                  <div className="calendar-day-number">{day.getDate()}</div>
+                  {dayJobs.slice(0, 3).map((job) => {
+                    const customer = customers.find((item) => item.id === job.customer_id);
+                    const crewName = crews.find((crew) => crew.id === job.crew_id)?.name || "Crew";
+                    return (
+                      <div key={job.id} className="calendar-job">
+                        <div className="calendar-job-main">
+                          <div className="calendar-job-title">
+                            {customer?.name || `Customer #${job.customer_id}`}
+                          </div>
+                          <div className="calendar-job-meta">{crewName}</div>
+                        </div>
+                        <StatusChip status={job.status} />
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <main className="page">
       <header className="page-header">
@@ -227,24 +339,59 @@ export default function Home() {
       <section className="card section">
         <div className="card-header">
           <div>
-            <div className="card-title">Weekly crew schedule</div>
+            <div className="card-title">Crew schedule</div>
             <p className="card-subtitle">
               Foreman and crew assignments for the current week, split by crew type.
             </p>
           </div>
           <div className="table-actions">
-            <button className="btn btn-secondary" onClick={() => shiftWeek(-1)}>
-              Previous
+            <button
+              className={scheduleView === "week" ? "btn btn-secondary" : "btn btn-ghost"}
+              onClick={() => setScheduleView("week")}
+            >
+              Weekly
             </button>
-            <button className="btn btn-secondary" onClick={() => shiftWeek(1)}>
-              Next
+            <button
+              className={scheduleView === "month" ? "btn btn-secondary" : "btn btn-ghost"}
+              onClick={() => setScheduleView("month")}
+            >
+              Monthly
             </button>
-            <span className="badge">Week of {formatDayLabel(weekStart)}</span>
+            {scheduleView === "week" ? (
+              <>
+                <button className="btn btn-secondary" onClick={() => shiftWeek(-1)}>
+                  Previous
+                </button>
+                <button className="btn btn-secondary" onClick={() => shiftWeek(1)}>
+                  Next
+                </button>
+                <span className="badge">Week of {formatDayLabel(weekStart)}</span>
+              </>
+            ) : (
+              <>
+                <button className="btn btn-secondary" onClick={() => shiftMonth(-1)}>
+                  Previous
+                </button>
+                <button className="btn btn-secondary" onClick={() => shiftMonth(1)}>
+                  Next
+                </button>
+                <span className="badge">{monthLabel}</span>
+              </>
+            )}
           </div>
         </div>
         <div className="weekly-schedule">
-          {renderCrewCalendar("Ground crews", "GTC foreman schedule", crewGroups.ground)}
-          {renderCrewCalendar("Plant health care crews", "PHC foreman schedule", crewGroups.phc)}
+          {scheduleView === "week" ? (
+            <>
+              {renderCrewCalendar("Ground crews", "GTC foreman schedule", crewGroups.ground)}
+              {renderCrewCalendar("Plant health care crews", "PHC foreman schedule", crewGroups.phc)}
+            </>
+          ) : (
+            <>
+              {renderMonthlyCalendar("Ground crews", "GTC monthly schedule", crewGroups.ground)}
+              {renderMonthlyCalendar("Plant health care crews", "PHC monthly schedule", crewGroups.phc)}
+            </>
+          )}
         </div>
       </section>
 
