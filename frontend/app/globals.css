@@ -1383,20 +1383,25 @@ textarea {
 .weekly-calendar {
   min-width: 960px;
   display: grid;
-  gap: 6px;
+  gap: 0;
+  border: 1px solid var(--sage-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #fff;
 }
 
 .weekly-header,
 .weekly-row {
   display: grid;
   grid-template-columns: 200px repeat(7, minmax(140px, 1fr));
-  gap: 6px;
+  gap: 0;
 }
 
 .weekly-cell {
-  border: 1px solid var(--sage-200);
+  border-right: 1px solid var(--sage-200);
+  border-bottom: 1px solid var(--sage-200);
   background: #fff;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   padding: 8px;
   font-size: 12px;
 }
@@ -1415,6 +1420,7 @@ textarea {
 .weekly-crew-name {
   font-weight: 600;
   color: var(--forest-900);
+  background: var(--cream-100);
 }
 
 .weekly-day-cell {
@@ -1422,6 +1428,14 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.weekly-row:last-child .weekly-cell {
+  border-bottom: none;
+}
+
+.weekly-cell:last-child {
+  border-right: none;
 }
 
 .weekly-job {
